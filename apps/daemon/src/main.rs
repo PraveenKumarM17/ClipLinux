@@ -1,54 +1,51 @@
-//! UniPick daemon entrypoint.
-//!
-//! Foundation only: probe the session, load default privacy rules, and exit
-//! without watching the clipboard.
+//! ClipLinux daemon entrypoint.
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 use clap::Parser;
-use unipick_core::{PlatformAdapter, SupportLevel};
-use unipick_platform::{select_adapter, AdapterKind};
-use unipick_privacy::default_rules;
+use clipl_daemon::{diagnostic_report, load_config, run};
+use tracing_subscriber::EnvFilter;
 
 #[derive(Parser)]
-#[command(
-    name = "unipick-daemon",
-    version,
-    about = "UniPick background daemon (foundation stub)"
-)]
+#[command(name = "clipl-daemon", version, about = "ClipLinux background daemon")]
 struct Args {
-    /// Print the capability matrix and exit.
+    /// Print session, backend, and database info, then exit.
     #[arg(long)]
     diagnose: bool,
 }
 
 fn main() {
-    let args = Args::parse();
-    let adapter = select_adapter();
-    let identity = adapter.identity();
-    let caps = adapter.capabilities();
-    let preferred = AdapterKind::preferred(&identity);
-    let rules = default_rules();
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info")),
+        )
+        .init();
 
-    println!("unipick-daemon {}", env!("CARGO_PKG_VERSION"));
-    println!("session: {:?} / {:?}", identity.session, identity.desktop);
-    println!(
-        "preferred adapter: {} (implemented: {})",
-        preferred.as_str(),
-        preferred.is_implemented()
-    );
-    println!("privacy rules loaded: {}", rules.len());
-    let watch = caps.level(unipick_core::Capability::ClipboardWatch);
-    let watch_label = match watch {
-        SupportLevel::Unknown => "unknown (not probed)".to_string(),
-        other => format!("{other:?}"),
+    let args = Args::parse();
+    let config = match load_config() {
+        Ok(cfg) => cfg,
+        Err(err) => {
+            eprintln!("clipl-daemon: {err}");
+            std::process::exit(2);
+        }
     };
-    println!("clipboard-watch: {watch_label}");
 
     if args.diagnose {
-        println!("identity: {identity:?}");
-        println!("capabilities: {caps:?}");
+        print!("{}", diagnostic_report(&config));
+        return;
     }
 
-    println!();
-    println!("Foundation stub: clipboard monitoring is intentionally not started.");
-    println!("The daemon will listen for IPC in a later milestone.");
+    let shutdown = Arc::new(AtomicBool::new(false));
+    let flag = Arc::clone(&shutdown);
+    if let Err(err) = ctrlc::set_handler(move || {
+        flag.store(true, Ordering::SeqCst);
+    }) {
+        tracing::warn!("ctrlc handler: {err}");
+    }
+
+    if let Err(err) = run(config, shutdown) {
+        eprintln!("clipl-daemon: {err}");
+        std::process::exit(1);
+    }
 }

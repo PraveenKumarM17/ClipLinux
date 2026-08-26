@@ -1,103 +1,57 @@
 # Platform capabilities
 
-UniPick treats **X11, generic Wayland, GNOME, KDE Plasma, and wlroots** as
+ClipLinux treats **X11, generic Wayland, GNOME, KDE Plasma, and wlroots** as
 different integration surfaces. A feature that works on one is not assumed to
 work on another.
 
-The source of truth at runtime is `PlatformCapabilities` in `unipick-core`.
-This document is the human-readable contract for that type.
+The source of truth at runtime is `PlatformCapabilities` plus
+`select_clipboard_backend()`.
 
 ## Identity vs capability
-
-Probe identity from documented environment:
 
 | Input | Maps to |
 | --- | --- |
 | `XDG_SESSION_TYPE` | `SessionType` (`x11` / `wayland`) |
 | `XDG_CURRENT_DESKTOP` | `DesktopEnvironment` |
 
-Identity is **not** permission to use a feature. After identity is known, each
-`Capability` is assigned a `SupportLevel` by an adapter that actually checks
-(or honestly reports `Unknown`).
+**Never use X11 APIs on a Wayland session**, even if `DISPLAY` is set (XWayland).
 
-```
-XDG_CURRENT_DESKTOP=Hyprland  ≠  ClipboardWatch = Native
-```
+## Clipboard backend matrix (Phase 2)
 
-Hyprland is a named `DesktopEnvironment` so a future adapter can exist. Until
-that adapter is implemented, `AdapterKind::Hyprland.is_implemented()` is
-`false` and the generic Linux adapter stays in use.
+| Session | Backend id | Read | Watch | Notes |
+| --- | --- | --- | --- | --- |
+| X11 + XFixes | `x11` | **IMPLEMENTED** Native (text) | **IMPLEMENTED** Native (`XFixesSelectionNotify`) | CLIPBOARD by default; PRIMARY optional via config |
+| X11 connect fail | `x11-unavailable` | Unsupported | Unsupported | Diagnose prints the error |
+| Generic Wayland | `wayland-generic` | **UNSUPPORTED** | **UNSUPPORTED** | No portable protocol; does **not** poll `wl-paste` |
+| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Needs Shell extension (`extensions/gnome`) |
+| KDE / Hyprland / Sway / wlroots | slot only | **PLANNED** | **PLANNED** | Named adapters, not implemented |
+| Unknown session | `none` | Unknown | Unknown | Watch not started |
 
-## Capabilities
+Write/image paste: **PLANNED** (X11 write is not implemented in this phase).
 
-| Capability | Meaning |
-| --- | --- |
-| `clipboard-read` | Read the current selection/clipboard |
-| `clipboard-write` | Set the clipboard |
-| `clipboard-watch` | Observe changes without an undocumented poll loop |
-| `global-hotkey` | Register a shortcut while another app is focused |
-| `overlay-popup` | Show a compact palette above other windows |
-| `image-paste` | Write image bytes, not only text |
-| `file-paste` | Write file URIs |
-| `portal-integration` | xdg-desktop-portal (or equivalent) is usable |
-| `gnome-extension` | GNOME Shell extension APIs are in play |
-| `kde-integration` | Plasma APIs are in play |
-| `local-storage` | App data directory (almost always native on Linux) |
-| `network` | Remote media providers may run |
+### X11 PRIMARY vs CLIPBOARD
 
-## Support levels
+- **CLIPBOARD** — Ctrl+C / Ctrl+V. Default (`clipboard.selection = "clipboard"`).
+- **PRIMARY** — mouse selection buffer. Enable with `primary` or `both`.
+- Monitoring PRIMARY will record many selection events; it is opt-in.
 
-| Level | Meaning | May UniPick use it? |
-| --- | --- | --- |
-| `Native` | First-class protocol/toolkit | Yes |
-| `Portal` | Desktop portal / DE API | Yes |
-| `Fallback` | Documented degraded path, reviewed | Yes |
-| `Unsupported` | Probed, unavailable | No |
-| `Unknown` | Not probed | No (do not guess) |
+Watch waits on XFixes events. Idle wait uses `poll_for_event` with a short
+sleep so shutdown is prompt. It does **not** spawn `xclip` in a loop.
 
-`Fallback` is allowed only when written down (this file or a design doc) and
-covered by tests. A busy-loop `xclip` poll is not a silent fallback.
+### GNOME Wayland
 
-## Expected matrix (design, not current probes)
-
-Foundation adapters report `Unknown` for almost everything except
-`local-storage` and `network`. The table below is the **intended** end state,
-not a claim that code implements it.
-
-| Capability | X11 | Generic Wayland | GNOME | KDE Plasma | wlroots | Hyprland / Sway |
-| --- | --- | --- | --- | --- | --- | --- |
-| clipboard-read | Native (ICCMM) | Unknown / compositor-specific | Portal or Shell | Native / portal | wlr-data-control where present | Same as owning compositor |
-| clipboard-write | Native | Same as read | Same as read | Same as read | Same as read | Same as read |
-| clipboard-watch | Native (XFixes) | Often **Unsupported** without a protocol | Prefer DE/portal | Prefer Klipper/portal | Native if data-control | Only with a dedicated adapter |
-| global-hotkey | Possible (XGrabKey) | Often **Unsupported** globally | Shell extension | KGlobalAccel | compositor IPC | compositor IPC |
-| overlay-popup | Layered window | Layer shell *if* offered | Shell-owned UI preferred | Plasma windowing | layer-shell | layer-shell |
-| image-paste | Usually yes | Depends on mime offer | Depends | Depends | Depends | Depends |
-| gnome-extension | Unsupported | Unsupported | Native when installed | Unsupported | Unsupported | Unsupported |
-| kde-integration | Unsupported | Unsupported | Unsupported | Native when installed | Unsupported | Unsupported |
-
-**Never copy X11 clipboard code into a Wayland backend.** Share tests and
-types; do not share protocol assumptions.
+Mutter does not offer `wlr-data-control` to regular clients. The daemon reports
+Unsupported and keeps serving IPC. A future GNOME Shell extension should push
+text to the daemon over the Unix socket — not key injection from the daemon.
 
 ## Adapter selection
 
-`unipick-platform::AdapterKind::preferred` picks a *slot* from identity:
+`AdapterKind::preferred` still picks a slot from identity. Implemented slots:
 
-1. GNOME → `gnome`
-2. Plasma → `kde`
-3. Hyprland / Sway / wlroots → named slots
-4. X11 session → `x11`
-5. Wayland session → `wayland-generic`
-6. Else → `linux-generic`
-
-Only `linux-generic` is implemented in the foundation. Preferred-but-missing
-adapters must not be silently replaced with X11 behavior on Wayland.
-
-## Portals
-
-When a compositor does not expose clipboard watch or global shortcuts, UniPick
-should try **xdg-desktop-portal** (or the DE equivalent) and set
-`SupportLevel::Portal`. If the portal is absent, the level is `Unsupported`,
-and the UI explains the gap instead of polling.
+- `linux-generic` — XDG probe + capability fill
+- `x11` — XFixes backend
+- `wayland-generic` — honest stub
+- `gnome` — honest stub + extension boundary
 
 ## Contributor rule
 

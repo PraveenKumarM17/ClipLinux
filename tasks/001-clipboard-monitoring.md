@@ -1,25 +1,30 @@
 # Task 001 — Clipboard monitoring
 
-Status: **not started**
+Status: **complete** (Phase 2)
 
-Do not implement this as part of the foundation.
+## Named sessions
 
-## When this opens
+| Session | Watch mechanism | SupportLevel |
+| --- | --- | --- |
+| X11 | XFixes `SelectionNotify` on CLIPBOARD | Native when `$DISPLAY` + XFixes work |
+| Generic Wayland | none | Unsupported |
+| GNOME Wayland | none (extension boundary) | Unsupported |
 
-After the foundation is accepted and a written capability probe exists for
-the first target session.
+Every captured item is classified and passed through `clipl_privacy::evaluate`
+**before** SQLite.
 
-## Required before code
+## Done
 
-1. Name the session (e.g. “X11 with XFixes”, “GNOME 47 portal”, “wlroots
-   wlr-data-control-unstable-v1”).
-2. Fill `SupportLevel` for `clipboard-read`, `clipboard-write`, and
-   `clipboard-watch` from a real probe — not from compositor folklore.
-3. Route every captured `ClipboardItem` through `unipick-privacy::decide`
-   before SQLite.
+- SQLite schema v1, migrations, XDG paths, `0600` files
+- Privacy detectors + explainable verdicts
+- Consecutive dedup (SHA-256)
+- Daemon + Unix IPC
+- CLI history commands
+- Mock clipboard integration tests (no host clipboard)
 
-## Explicitly forbidden until designed
+## Still forbidden / not in this task
 
-- Polling `xclip` / `wl-paste` in a tight loop as the default backend
-- Using X11 APIs on a Wayland session because “it compiled”
+- Polling `xclip` / `wl-paste` as the default backend
+- Using X11 APIs on a Wayland session
 - Logging clipboard payloads
+- Global hotkeys, overlay, auto-paste

@@ -1,0 +1,23 @@
+[package]
+name = "clipl-clipboard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Clipboard history model and storage helpers for ClipLinux"
+publish.workspace = true
+
+[dependencies]
+clipl-core.workspace = true
+clipl-privacy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+rusqlite.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

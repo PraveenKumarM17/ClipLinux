@@ -1,17 +1,17 @@
-//! Cross-crate smoke tests for the UniPick foundation.
+//! Cross-crate smoke tests for the ClipLinux foundation.
 #![cfg(test)]
 
-use unipick_clipboard::{ClipboardHistory, RecordOutcome};
-use unipick_core::{
+use clipl_clipboard::{ClipboardHistory, RecordOutcome};
+use clipl_core::{
     ClipboardBackend, ClipboardItem, MediaQuery, PlatformAdapter, StickerPackProvider,
 };
-use unipick_emoji::EmojiCatalog;
-use unipick_media::{LocalStickerLibrary, MediaRegistry};
-use unipick_platform::{select_adapter, AdapterKind};
-use unipick_privacy::{decide, default_rules, PrivacyDecision};
-use unipick_protocol::{Envelope, Message, Request};
-use unipick_snippets::SnippetLibrary;
-use unipick_symbols::SymbolCatalog;
+use clipl_emoji::EmojiCatalog;
+use clipl_media::{LocalStickerLibrary, MediaRegistry};
+use clipl_platform::{select_adapter, AdapterKind};
+use clipl_privacy::{decide, default_rules, PrivacyDecision};
+use clipl_protocol::{Envelope, Message, Request};
+use clipl_snippets::SnippetLibrary;
+use clipl_symbols::SymbolCatalog;
 
 #[test]
 fn workspace_crates_compose() {
@@ -31,7 +31,7 @@ fn workspace_crates_compose() {
 
     let snippets = SnippetLibrary::default();
     snippets
-        .upsert(&unipick_core::Snippet::new("hello", "world"))
+        .upsert(&clipl_core::Snippet::new("hello", "world"))
         .unwrap();
     assert_eq!(snippets.list().unwrap().len(), 1);
 
@@ -51,7 +51,7 @@ fn workspace_crates_compose() {
 
 #[test]
 fn memory_clipboard_is_a_valid_backend() {
-    let backend = unipick_core::placeholders::MemoryClipboard::default();
+    let backend = clipl_core::placeholders::MemoryClipboard::default();
     assert_eq!(backend.name(), "memory");
-    assert!(!backend.supports_watch());
+    assert!(backend.supports_watch());
 }

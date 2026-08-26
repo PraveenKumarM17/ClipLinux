@@ -1,23 +1,34 @@
 [package]
-name = "unipick-daemon"
+name = "clipl-daemon"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "UniPick background daemon"
+description = "ClipLinux background daemon"
 publish.workspace = true
 
 [[bin]]
-name = "unipick-daemon"
+name = "clipl-daemon"
 path = "src/main.rs"
 
+[lib]
+name = "clipl_daemon"
+path = "src/lib.rs"
+
 [dependencies]
-unipick-core.workspace = true
-unipick-platform.workspace = true
-unipick-privacy.workspace = true
-unipick-protocol.workspace = true
+clipl-core.workspace = true
+clipl-platform.workspace = true
+clipl-privacy.workspace = true
+clipl-protocol.workspace = true
+clipl-clipboard.workspace = true
 clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+ctrlc.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
 
 [lints]
 workspace = true

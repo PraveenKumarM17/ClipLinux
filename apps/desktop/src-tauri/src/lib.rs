@@ -1,4 +1,4 @@
-//! UniPick desktop library.
+//! ClipLinux desktop library.
 //!
 //! The Tauri v2 shell is the intended host. This crate compiles as a plain
 //! binary until webview dependencies are introduced in the desktop-shell
@@ -7,14 +7,14 @@
 
 #![forbid(unsafe_code)]
 
-use unipick_core::PlatformCapabilities;
-use unipick_protocol::{Envelope, Message, Request, Response};
+use clipl_core::PlatformCapabilities;
+use clipl_protocol::{Envelope, Message, Request, Response};
 
 /// Application identifier used by Tauri and desktop files.
-pub const APP_ID: &str = "dev.unipick.UniPick";
+pub const APP_ID: &str = "io.clipl.ClipLinux";
 
 /// Human-readable product name.
-pub const APP_NAME: &str = "UniPick";
+pub const APP_NAME: &str = "ClipLinux";
 
 /// Handle a protocol request locally (no daemon yet).
 pub fn handle_local(request: Request) -> Response {
@@ -24,6 +24,10 @@ pub fn handle_local(request: Request) -> Response {
             Response::Capabilities(PlatformCapabilities::conservative_linux())
         }
         Request::GetHistory { .. } => Response::History(Vec::new()),
+        Request::SearchHistory { .. } => Response::History(Vec::new()),
+        Request::GetStatus => Response::Error {
+            message: "desktop stub has no daemon status".into(),
+        },
         Request::ListSnippets => Response::Snippets(Vec::new()),
         Request::ListPrivacyRules => Response::PrivacyRules(Vec::new()),
         Request::Paste { .. } => Response::Error {
@@ -36,14 +40,14 @@ pub fn handle_local(request: Request) -> Response {
 }
 
 /// Decode a JSON envelope and produce a response envelope.
-pub fn dispatch_json(bytes: &[u8]) -> Result<Envelope, unipick_core::Error> {
+pub fn dispatch_json(bytes: &[u8]) -> Result<Envelope, clipl_core::Error> {
     let incoming = Envelope::from_json_bytes(bytes)?;
     match incoming.payload {
         Message::Request(request) => Ok(Envelope {
             id: incoming.id,
             payload: Message::Response(handle_local(request)),
         }),
-        _ => Err(unipick_core::Error::Protocol(
+        _ => Err(clipl_core::Error::Protocol(
             "desktop stub only accepts requests".into(),
         )),
     }

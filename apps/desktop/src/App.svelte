@@ -5,7 +5,7 @@
 
 <main class="shell">
   <header>
-    <h1>UniPick</h1>
+    <h1>ClipLinux</h1>
     <p>Foundation shell. Clipboard monitoring is not implemented yet.</p>
   </header>
 

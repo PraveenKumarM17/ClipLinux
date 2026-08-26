@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "UniPick",
+  "productName": "ClipLinux",
   "version": "0.1.0",
-  "identifier": "dev.unipick.UniPick",
+  "identifier": "io.clipl.ClipLinux",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "palette",
-        "title": "UniPick",
+        "title": "ClipLinux",
         "width": 420,
         "height": 560,
         "resizable": false,

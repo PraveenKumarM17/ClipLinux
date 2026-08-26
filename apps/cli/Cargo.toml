@@ -1,23 +1,24 @@
 [package]
-name = "unipick"
+name = "clipl"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "UniPick command-line interface"
+description = "ClipLinux command-line interface"
 publish.workspace = true
 
 [[bin]]
-name = "unipick"
+name = "clipl"
 path = "src/main.rs"
 
 [dependencies]
-unipick-core.workspace = true
-unipick-platform.workspace = true
-unipick-protocol.workspace = true
+clipl-core.workspace = true
+clipl-platform.workspace = true
+clipl-protocol.workspace = true
 clap.workspace = true
 serde_json.workspace = true
+serde.workspace = true
 
 [lints]
 workspace = true

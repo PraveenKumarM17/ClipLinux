@@ -1,6 +1,6 @@
-# UniPick architecture
+# ClipLinux architecture
 
-UniPick is split so that **domain logic, platform I/O, and UI** cannot collapse
+ClipLinux is split so that **domain logic, platform I/O, and UI** cannot collapse
 into one crate. Contributors should be able to implement a GIF provider, a
 Plasma adapter, or a Svelte view without reading compositor code.
 
@@ -9,21 +9,21 @@ Plasma adapter, or a Svelte view without reading compositor code.
 ```
 ┌─────────────┐     Unix IPC      ┌──────────────────┐
 │  Desktop    │ ◀──────────────▶  │  Daemon          │
-│  Tauri +    │  unipick-protocol │  history, cache, │
+│  Tauri +    │  clipl-protocol │  history, cache, │
 │  Svelte 5   │                   │  privacy, probe  │
 └─────────────┘                   └────────┬─────────┘
        ▲                                   │
        │ local fallback                    │ traits
 ┌─────────────┐                   ┌────────▼─────────┐
-│  CLI        │ ────────────────▶ │  unipick-core    │
+│  CLI        │ ────────────────▶ │  clipl-core    │
 └─────────────┘                   │  types + traits  │
                                   └────────┬─────────┘
                                            │
                     ┌──────────────────────┼──────────────────────┐
                     ▼                      ▼                      ▼
-            unipick-platform        unipick-clipboard      unipick-media
-            (adapters)              unipick-privacy        unipick-emoji
-                                    unipick-snippets       unipick-symbols
+            clipl-platform        clipl-clipboard      clipl-media
+            (adapters)              clipl-privacy        clipl-emoji
+                                    clipl-snippets       clipl-symbols
 ```
 
 The desktop UI never calls X11 or Wayland directly. The daemon never imports
@@ -32,19 +32,19 @@ Svelte. Core never imports Tauri.
 ## Crate graph (allowed dependencies)
 
 ```
-unipick-core                 (no UniPick crate deps)
+clipl-core                 (no ClipLinux crate deps)
     ↑
-unipick-protocol             (core)
-unipick-privacy              (core)
-unipick-platform             (core)
-unipick-emoji                (core)
-unipick-symbols              (core)
-unipick-media                (core)
-unipick-snippets             (core)
-unipick-clipboard            (core, privacy)
+clipl-protocol             (core)
+clipl-privacy              (core)
+clipl-platform             (core)
+clipl-emoji                (core)
+clipl-symbols              (core)
+clipl-media                (core)
+clipl-snippets             (core)
+clipl-clipboard            (core, privacy)
     ↑
 apps/cli                     (core, platform, protocol)
-apps/daemon                  (core, platform, privacy, protocol)
+apps/daemon                  (core, platform, privacy, protocol, clipboard)
 apps/desktop/src-tauri       (core, protocol)
 ```
 
@@ -52,16 +52,18 @@ apps/desktop/src-tauri       (core, protocol)
 
 | From | To | Why |
 | --- | --- | --- |
-| `unipick-core` | Tauri, GTK, Qt, smithay, x11rb | Core must stay host-agnostic |
-| `unipick-core` | `unipick-platform` | Detection is an implementation, not a domain type |
+| `clipl-core` | Tauri, GTK, Qt, smithay, x11rb | Core must stay host-agnostic |
+| `clipl-core` | `clipl-platform` | Detection is an implementation, not a domain type |
 | Svelte / TypeScript | OS clipboard APIs | UI talks protocol only |
 | Any crate | Electron | Product rule |
 
-SQLite belongs in a future `StorageBackend` implementation, not in core.
+SQLite implements `StorageBackend` (`kv` table) and the typed clipboard
+repository (`clipboard_items`) in `clipl-clipboard::SqliteStore`. Core still
+has no SQLite dependency.
 
 ## Domain types
 
-Defined in `unipick-core` and serialized with serde so IPC, SQLite, and tests
+Defined in `clipl-core` and serialized with serde so IPC, SQLite, and tests
 share one shape:
 
 | Type | Role |
@@ -80,11 +82,11 @@ share one shape:
 
 | Trait | Implementors (now / later) |
 | --- | --- |
-| `ClipboardBackend` | `MemoryClipboard` / X11, Wayland, portal |
+| `ClipboardBackend` | `MemoryClipboard`, X11 (text watch); Wayland/GNOME stubs |
 | `PlatformAdapter` | `LinuxGenericAdapter` / GNOME, KDE, wlroots, Hyprland, Sway |
 | `MediaProvider` | `OfflineMediaProvider` / Tenor, Giphy, others |
 | `StickerPackProvider` | `EmptyStickerPackProvider` / local directory, community |
-| `StorageBackend` | `MemoryStorage` / SQLite |
+| `StorageBackend` | `MemoryStorage`, `SqliteStore` |
 
 Traits are synchronous in the foundation. Async runtimes (tokio) can wrap them
 in the daemon without leaking into core.
@@ -112,17 +114,17 @@ capabilities. See [PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md).
   without the `tauri` crate so the workspace builds on machines without
   WebKitGTK)
 - Command handlers will live in `apps/desktop/src-tauri` and call the daemon
-  via `unipick-protocol`
+  via `clipl-protocol`
 
 ### Daemon (`apps/daemon`)
 
-Resident process. Foundation binary probes the session, loads default privacy
-rules, and **does not** watch the clipboard.
+Resident process: capability probe, SQLite, privacy engine, optional clipboard
+watch, Unix-socket IPC. See [docs/architecture/daemon.md](docs/architecture/daemon.md).
 
 ### CLI (`apps/cli`)
 
-`unipick doctor` prints identity and the capability matrix. `unipick ping`
-builds a protocol envelope but does not open a socket yet.
+`clipl doctor` probes locally. `status`, `ping`, and `history` talk to the
+daemon over the Unix socket.
 
 ## Extensions and packages
 
@@ -132,16 +134,14 @@ builds a protocol envelope but does not open a socket yet.
 - `packages/sticker-packs` — local packs
 - `packages/themes` — design tokens (data, not code)
 
-## Storage plan (not implemented)
+## Storage
 
-SQLite will implement `StorageBackend` with namespaces (`clipboard-history`,
-`snippets`, `blobs`, `privacy-rules`). Large images are blobs referenced by
-`ContentRef::Blob`, never duplicated in history rows. User clipboard payloads
-are local-only; they are not telemetry.
+See [docs/architecture/storage.md](docs/architecture/storage.md). SQLite is the
+production `StorageBackend`; tests keep `MemoryStorage`.
 
 ## Error handling
 
-`unipick_core::Error` is serializable so the daemon can return it over IPC.
+`clipl_core::Error` is serializable so the daemon can return it over IPC.
 Platform crates map OS errors into this type. `unwrap` is restricted to tests
 and true invariants.
 

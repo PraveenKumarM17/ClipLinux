@@ -1,24 +1,26 @@
-# UniPick
+# ClipLinux
 
 Universal paste, clipboard, and expression for Linux.
 
-UniPick is a keyboard-first Linux ecosystem: clipboard history, emoji, GIFs,
+ClipLinux is a keyboard-first Linux ecosystem: clipboard history, emoji, GIFs,
 stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-This repository currently contains the **foundation**: crate layout, domain
-types, traits, documentation, and compiling placeholders. Clipboard monitoring
-is intentionally not implemented yet.
+**Current milestone:** clipboard history daemon (text), SQLite, Unix IPC, X11
+watch. Wayland clipboard monitoring is **unsupported** until a compositor
+adapter or GNOME extension exists. Global shortcuts and the Tauri UI are not
+in this phase.
 
 ## Quick start
 
 ```bash
-# Rust workspace
-cargo check --workspace
 cargo test --workspace
-cargo run -p unipick -- doctor
-cargo run -p unipick-daemon -- --diagnose
+cargo run -p clipl-daemon -- --diagnose
+cargo run -p clipl-daemon          # start (Ctrl+C to stop)
+cargo run -p clipl -- doctor
+cargo run -p clipl -- status
+cargo run -p clipl -- history --limit 20
 ```
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
@@ -34,6 +36,10 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 | [PRIVACY_MODEL.md](PRIVACY_MODEL.md) | What is stored, filtered, and never logged |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | How to land changes |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Tooling and local commands |
+| [docs/architecture/clipboard-engine.md](docs/architecture/clipboard-engine.md) | History pipeline |
+| [docs/architecture/daemon.md](docs/architecture/daemon.md) | Daemon behaviour |
+| [docs/architecture/ipc.md](docs/architecture/ipc.md) | Unix socket protocol |
+| [docs/architecture/storage.md](docs/architecture/storage.md) | SQLite schema and paths |
 
 ## Layout
 

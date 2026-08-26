@@ -1,11 +1,10 @@
 # Privacy model
 
-Clipboard history is **private user data**. UniPick stores it on the local
-machine, filters it before persistence, and does not send it to UniPick
+Clipboard history is **private user data**. ClipLinux stores it on the local
+machine, filters it **before** persistence, and does not send it to ClipLinux
 maintainers or to media vendors as a side effect of copying.
 
-This document is the product contract. Types live in `unipick-core`; the
-engine lives in `unipick-privacy`.
+Types live in `clipl-core`; the engine lives in `clipl-privacy`.
 
 ## Goals
 
@@ -13,77 +12,114 @@ engine lives in `unipick-privacy`.
 2. Offline features must not require an account or a network.
 3. Remote GIF search, if enabled, must not upload clipboard contents.
 4. Defaults should be safe for a shared Linux desktop.
+5. Decisions must be **explainable** (reasons never include payload bytes).
 
 ## What may be stored
 
-| Data | Where (planned) | Default |
+| Data | Where | Default |
 | --- | --- | --- |
-| Clipboard text/images that pass policy | SQLite + blob store | On, with exclusion rules |
-| Snippets the user created | SQLite | On |
+| Text/HTML/URI that pass policy | SQLite `clipboard_items` | On, with exclusion rules |
+| Snippets the user created | SQLite `kv` (later) | On |
 | Emoji / symbol catalogs | Packaged files | On (not personal data) |
-| Media cache (GIFs, stickers) | Disk cache | On when the user searches |
-| Capability matrix | Memory / optional diagnostics | Not sensitive |
+| Capability matrix | Memory / diagnostics | Not sensitive |
 | Crash logs | Local | Must not include clipboard payloads |
 
-## What must not be stored (defaults)
+Images and files are **not** persisted in Phase 2.
 
-`SensitiveContentType` labels drive `PrivacyRule` actions:
+## Detectors (IMPLEMENTED, conservative)
 
-| Type | Default action |
+All detectors can be toggled in `config.toml` under `[privacy]`. Reasons logged
+to tracing are labels such as `PEM/OpenSSH private key header`, never the
+secret itself.
+
+### A. Private keys — `block_private_keys`
+
+Markers (case-insensitive):
+
+- `BEGIN PRIVATE KEY`
+- `BEGIN RSA PRIVATE KEY` / `DSA` / `EC`
+- `BEGIN OPENSSH PRIVATE KEY`
+- `BEGIN ENCRYPTED PRIVATE KEY`
+- `BEGIN SSH2 ENCRYPTED PRIVATE KEY`
+- `BEGIN PGP PRIVATE KEY BLOCK`
+
+Public keys (`BEGIN PUBLIC KEY`) are **not** flagged.
+
+### B. JWT-like tokens — `block_high_confidence_tokens`
+
+Requires **all** of:
+
+- no whitespace
+- exactly three `.`-separated segments
+- each segment base64url (`A–Z a–z 0–9 - _`) length ≥ 8
+- total length ≥ 40
+- header starts with `eyJ` (base64url of `{"`)
+
+`file.tar.gz`, `v1.2.3`, and `a.b.c` do not match.
+
+### C. API tokens — `block_high_confidence_tokens`
+
+High-confidence prefixes only:
+
+| Prefix | Notes |
 | --- | --- |
-| Password | Exclude from history |
-| PrivateKey | Exclude from history |
-| Token | Exclude from history |
-| CreditCard | Exclude from history |
-| PersonalIdentifier | Exclude from history (when detected) |
-| OneTimeCode | Exclude from history (when detected) |
+| `ghp_` / `gho_` | GitHub PATs (min length enforced) |
+| `github_pat_` | Fine-grained GitHub PAT |
+| `glpat-` | GitLab |
+| `sk_live_` / `sk_test_` / `rk_live_` / `rk_test_` | Stripe |
+| `xoxb-` / `xoxp-` | Slack |
+| `AIza` + 35 charset chars | Google API key (39 total) |
 
-In the foundation, the classifier **does not guess**. It only honors labels
-already attached to a `ClipboardItem` and explicit `PrivacyMatcher`s (MIME
-prefix, literal text). Heuristic detectors (Luhn, PEM, password-manager MIME)
-need their own review before they ship, to avoid hiding legitimate text.
+Short `sk-` strings are **not** flagged.
+
+### D. Credit cards — `block_credit_cards`
+
+- 13–19 digits, Luhn-valid
+- AND either the whole clipboard is only digits/spaces/dashes, **or** the
+  number is grouped with spaces/dashes (`4111-1111-1111-1111`)
+- A 16-digit run inside a sentence **without** grouping is ignored
+
+### E. OTP — `block_otp`
+
+Whole clipboard is 6 or 8 digits (optional spaces). `your code is 847291` is
+**not** flagged. 4-digit years are not flagged.
+
+### F. Password-manager sources
+
+- MIME containing `password`, `secret`, `passwordmanager`, or
+  `x-kde-passwordmanagerhint`
+- `PrivacyMatcher::ApplicationId` when `ClipboardItem.source_app` is set
+  (origin detection itself is **PLANNED**)
 
 ## Decision pipeline
 
 ```
 ClipboardContent
-    → optional classify()
+    → classify_text / MIME  → labels + reasons
     → PrivacyRule list (first match wins)
-    → PrivacyDecision { Allow, Exclude, Redact, Expire, Confirm }
-    → StorageBackend  (only if allowed)
+    → PrivacyVerdict { Allow, Exclude, Redact, Expire, Confirm }
+    → SQLite  (only if allowed)
 ```
 
-`unipick-clipboard` calls this pipeline in `record()`. An `Exclude` result is
-success from the caller’s point of view: the secret was handled, not stored.
+`Exclude` is success: the secret was handled, not stored.
 
-## Network and providers
+## Defaults
 
-- Emoji, symbols, snippets, and history work **offline**.
-- `MediaProvider::is_available` is false when a remote vendor cannot be
-  reached; the registry still includes the offline provider.
-- Search queries for GIFs are user-initiated. Clipboard text is **not** used
-  as a search query unless the user explicitly searches using that text.
-- Provider API keys, if any, are user-supplied configuration, not phoned-home
-  telemetry.
+| Type | Default action |
+| --- | --- |
+| Password | Exclude |
+| PrivateKey | Exclude |
+| Token | Exclude |
+| CreditCard | Exclude |
+| OneTimeCode | Exclude |
+
+`privacy.enabled = false` skips detectors and rules (user choice).
 
 ## Access control
 
-UniPick does not implement multi-user sync. History files must be created with
-user-only permissions (`0600` / directory `0700`) when SQLite lands. Wayland
-and X11 clipboard access is whatever the session already grants; UniPick must
-not weaken that.
+History files: directory `0700`, database `0600`. No multi-user sync.
 
 ## Diagnostics
 
-`unipick doctor` prints session identity and support levels. It must not print
-clipboard payloads. Bug reports should attach doctor output, not history
-dumps.
-
-## Future work (not in foundation)
-
-- Password-manager offered MIME (`x-kde-passwordManagerHint`, etc.)
-- Optional “never persist images”
-- Per-application exclusion (`PrivacyMatcher::ApplicationId`) when the
-  platform provides an origin
-- Encrypted-at-rest database (only if a real threat model demands it; file
-  permissions come first)
+`clipl doctor` / `clipl-daemon --diagnose` print identity and support
+levels. They must not print clipboard payloads.

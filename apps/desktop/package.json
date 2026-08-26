@@ -1,8 +1,8 @@
 {
-  "name": "unipick-desktop",
+  "name": "clipl-desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "UniPick desktop UI (Svelte 5 + Tauri v2)",
+  "description": "ClipLinux desktop UI (Svelte 5 + Tauri v2)",
   "type": "module",
   "scripts": {
     "dev": "vite",

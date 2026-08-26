@@ -1,4 +1,4 @@
-# Contributing to UniPick
+# Contributing to ClipLinux
 
 Thank you for helping build a Linux paste ecosystem. This project is designed
 so a first-time contributor can own one crate or one adapter without learning
@@ -44,13 +44,13 @@ cargo fmt --all
 
 | You want to… | Work in |
 | --- | --- |
-| Change domain types | `crates/unipick-core` (discuss first; everything serializes this) |
-| Add IPC messages | `crates/unipick-protocol` |
-| Filter secrets | `crates/unipick-privacy` |
-| History record/query | `crates/unipick-clipboard` |
-| Emoji search | `crates/unipick-emoji` + `packages/emoji-data` |
-| GIF vendor | `crates/unipick-media` implementing `MediaProvider` |
-| Session probe / adapter | `crates/unipick-platform` |
+| Change domain types | `crates/clipl-core` (discuss first; everything serializes this) |
+| Add IPC messages | `crates/clipl-protocol` |
+| Filter secrets | `crates/clipl-privacy` |
+| History record/query | `crates/clipl-clipboard` |
+| Emoji search | `crates/clipl-emoji` + `packages/emoji-data` |
+| GIF vendor | `crates/clipl-media` implementing `MediaProvider` |
+| Session probe / adapter | `crates/clipl-platform` |
 | GNOME/KDE UI glue | `extensions/` |
 | Palette UI | `apps/desktop` |
 | CLI diagnostics | `apps/cli` |

@@ -1,13 +1,13 @@
-# UniPick master plan
+# ClipLinux master plan
 
-UniPick is a **universal paste, clipboard, and expression platform for Linux**.
+ClipLinux is a **universal paste, clipboard, and expression platform for Linux**.
 The product is an ecosystem, not a single window:
 
-1. **UniPick Desktop** — compact, keyboard-first palette (clipboard history,
+1. **ClipLinux Desktop** — compact, keyboard-first palette (clipboard history,
    emoji, GIF search, stickers, symbols, snippets).
-2. **UniPick Daemon** — background clipboard monitoring, history, privacy
+2. **ClipLinux Daemon** — background clipboard monitoring, history, privacy
    filtering, capability detection, media cache.
-3. **UniPick CLI** — terminal access, diagnostics, capability checks.
+3. **ClipLinux CLI** — terminal access, diagnostics, capability checks.
 4. **Platform integrations** — X11, generic Wayland, GNOME, KDE Plasma,
    wlroots compositors, with future Hyprland and Sway adapters.
 5. **Extensible content** — replaceable GIF providers, local sticker packs,
@@ -21,7 +21,7 @@ milestone ends when its exit criteria are met, not when a calendar says so.
 
 - Rust is the core language. The desktop shell is **Tauri v2**. The UI is
   **Svelte 5 + TypeScript**. Persistence is **SQLite**.
-- `unipick-core` must not depend on Tauri, Svelte, GTK, Qt, or compositor
+- `clipl-core` must not depend on Tauri, Svelte, GTK, Qt, or compositor
   crates.
 - Platform-specific code is isolated behind traits (`ClipboardBackend`,
   `PlatformAdapter`, …).
@@ -34,45 +34,32 @@ milestone ends when its exit criteria are met, not when a calendar says so.
 - Electron is out of scope forever.
 - The tree must stay approachable for first-time open-source contributors.
 
-## Phase 0 — Foundation (this repository state)
+## Phase 0 — Foundation
 
-**Goal:** a compiling workspace, a documented architecture, and domain types
-that later milestones can depend on without rewriting.
+**Status:** complete.
 
-**In:**
-
-- Cargo workspace and crate graph
-- Domain types and traits
-- CLI `doctor` / daemon stub / desktop stub
-- Privacy rule types and a conservative engine
-- Capability model with `SupportLevel::{Native,Portal,Fallback,Unsupported,Unknown}`
-- Documentation listed in the README
-
-**Out:**
-
-- OS clipboard watching
-- Global hotkeys
-- Tauri window runtime dependency
-- SQLite schema
-- Remote GIF APIs
-- GNOME / KDE extension code
-
-**Exit:** `cargo test --workspace` passes; docs describe what is *not* built.
+Workspace, domain types, privacy rule types, capability model, CLI `doctor`,
+and documentation. Exit: `cargo test --workspace` passed.
 
 ## Phase 1 — Persistence and daemon process
 
-- SQLite `StorageBackend`
-- Unix-socket IPC using `unipick-protocol`
-- Daemon stays resident, loads privacy rules, exposes ping/history
-- Still no clipboard watching
+**Status:** folded into Phase 2 (SQLite + IPC shipped together with watch).
 
 ## Phase 2 — Clipboard history on one honest path
 
-- Implement **one** `ClipboardBackend` chosen by capability detection
-- Prefer documented APIs (X11 `CLIPBOARD`, Wayland data-control *or* portal)
-- If watch is `Unsupported`, the UI still allows manual capture; it does not
-  silently poll unless a documented fallback is accepted in a design review
+**Status:** complete for text history.
+
+- SQLite `StorageBackend` + typed `clipboard_items`
+- Unix-socket IPC using `clipl-protocol`
+- Daemon stays resident, loads privacy rules, exposes ping/history/status
+- X11 `CLIPBOARD` via XFixes is the Native watch path
+- Generic Wayland and GNOME Wayland report Unsupported (no silent polling)
 - Privacy engine runs **before** bytes hit SQLite
+- If watch is `Unsupported`, the daemon still serves IPC; it does not poll
+  `xclip` / `wl-paste`
+
+**Out of this phase:** global hotkeys, overlay, auto-paste, Tauri UI, GIF APIs,
+GNOME/KDE extension implementations.
 
 ## Phase 3 — Desktop palette shell
 
@@ -107,6 +94,6 @@ that later milestones can depend on without rewriting.
 
 ## Ownership of later work
 
-Do not start Phase 2 work (clipboard monitoring) until Phase 0 is merged and
-the capability matrix for the target session is written down. Guessing
-Wayland behavior from X11 code is a defect, not a shortcut.
+Phase 2 is complete. Do not start global shortcuts, overlay, or the Tauri
+production UI until the history daemon is the agreed IPC source. Guessing
+Wayland clipboard behavior from X11 code remains a defect, not a shortcut.

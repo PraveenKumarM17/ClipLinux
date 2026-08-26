@@ -1,0 +1,20 @@
+# Example ClipLinux config
+# Copy to $XDG_CONFIG_HOME/clipl/config.toml
+
+[history]
+enabled = true
+max_items = 500
+max_age_days = 30
+
+[privacy]
+enabled = true
+block_private_keys = true
+block_credit_cards = true
+block_high_confidence_tokens = true
+block_otp = true
+
+[clipboard]
+# X11 only: clipboard (Ctrl+C), primary (mouse), or both
+selection = "clipboard"
+# consecutive | none
+deduplication_policy = "consecutive"

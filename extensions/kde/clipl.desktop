@@ -1,0 +1,4 @@
+# ClipLinux KDE Plasma integration (not implemented)
+Name=ClipLinux
+Comment=Universal paste palette
+Type=Service

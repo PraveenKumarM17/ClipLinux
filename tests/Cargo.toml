@@ -1,23 +1,24 @@
 [package]
-name = "unipick-workspace-tests"
+name = "clipl-workspace-tests"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "Cross-crate smoke tests for the UniPick workspace"
+description = "Cross-crate smoke tests for the ClipLinux workspace"
 publish = false
 
 [dependencies]
-unipick-core.workspace = true
-unipick-clipboard.workspace = true
-unipick-emoji.workspace = true
-unipick-media.workspace = true
-unipick-snippets.workspace = true
-unipick-symbols.workspace = true
-unipick-privacy.workspace = true
-unipick-platform.workspace = true
-unipick-protocol.workspace = true
+clipl-core.workspace = true
+clipl-clipboard.workspace = true
+clipl-emoji.workspace = true
+clipl-media.workspace = true
+clipl-snippets.workspace = true
+clipl-symbols.workspace = true
+clipl-privacy.workspace = true
+clipl-platform.workspace = true
+clipl-protocol.workspace = true
+clipl-daemon = { path = "../apps/daemon" }
 
 [lints]
 workspace = true

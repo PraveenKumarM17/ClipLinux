@@ -1,0 +1,15 @@
+[package]
+name = "clipl-emoji"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Emoji catalog and search for ClipLinux"
+publish.workspace = true
+
+[dependencies]
+clipl-core.workspace = true
+
+[lints]
+workspace = true
