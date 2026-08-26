@@ -109,12 +109,14 @@ capabilities. See [PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md).
 
 ### Desktop (`apps/desktop`)
 
-- **UI:** Svelte 5 + TypeScript + Vite
-- **Shell:** Tauri v2 (config present; the Rust crate currently compiles
-  without the `tauri` crate so the workspace builds on machines without
-  WebKitGTK)
-- Command handlers will live in `apps/desktop/src-tauri` and call the daemon
-  via `clipl-protocol`
+- **UI:** Svelte 5 + TypeScript + Vite (history picker; other tabs are placeholders)
+- **Shell:** Tauri v2, application id `io.clipl.ClipLinux`
+- **Host:** `apps/desktop/src-tauri` talks to `clipl-daemon` over `clipl-protocol`.
+  It does not open SQLite. Default Cargo features omit Tauri so workspace tests
+  do not need WebKitGTK; `npm run tauri dev` passes `--features tauri-app`.
+
+See [docs/architecture/desktop.md](docs/architecture/desktop.md) and
+[docs/architecture/desktop-daemon-boundary.md](docs/architecture/desktop-daemon-boundary.md).
 
 ### Daemon (`apps/daemon`)
 

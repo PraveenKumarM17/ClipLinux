@@ -92,7 +92,10 @@ impl HistoryStore for MemoryHistoryStore {
                     .is_some_and(|text| text.to_ascii_lowercase().contains(&needle))
             })
             .collect();
-        items.sort_by_key(|item| std::cmp::Reverse(item.created_at));
+        items.sort_by(|a, b| match b.pinned.cmp(&a.pinned) {
+            std::cmp::Ordering::Equal => b.created_at.cmp(&a.created_at),
+            other => other,
+        });
         items.truncate(limit);
         Ok(items)
     }

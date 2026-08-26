@@ -22,6 +22,8 @@ See also:
 - [daemon.md](daemon.md)
 - [ipc.md](ipc.md)
 - [storage.md](storage.md)
+- [desktop.md](desktop.md)
+- [desktop-daemon-boundary.md](desktop-daemon-boundary.md)
 
 ## Why core has in-memory placeholders
 

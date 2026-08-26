@@ -320,7 +320,7 @@ impl HistoryStore for SqliteStore {
                  FROM clipboard_items
                  WHERE text_content IS NOT NULL
                    AND LOWER(text_content) LIKE LOWER(?1) ESCAPE '\\'
-                 ORDER BY created_at DESC
+                 ORDER BY pinned DESC, created_at DESC
                  LIMIT ?2",
             )
             .map_err(|err| Error::Storage(err.to_string()))?;

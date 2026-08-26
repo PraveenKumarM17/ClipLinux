@@ -15,6 +15,9 @@ Status: **IMPLEMENTED** as a resident process with IPC, SQLite, and optional wat
 
 If watch is unsupported, the daemon **still serves history** over IPC. That is a graceful degradation, not a crash.
 
+`CopyItem` records a content-hash skip so the watch thread does not store the
+echo when the desktop copies an existing item back to the clipboard.
+
 ## Diagnose
 
 ```bash

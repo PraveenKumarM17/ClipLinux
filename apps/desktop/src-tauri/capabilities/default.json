@@ -1,0 +1,11 @@
+{
+  "identifier": "default",
+  "description": "ClipLinux palette window",
+  "windows": ["palette"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-close",
+    "core:window:allow-hide",
+    "core:window:allow-set-focus"
+  ]
+}

@@ -84,6 +84,21 @@ pub enum Request {
     },
     /// Clear unpinned history.
     ClearHistory,
+    /// Pin a history item.
+    PinItem {
+        /// History item to pin.
+        item_id: ClipboardItemId,
+    },
+    /// Unpin a history item.
+    UnpinItem {
+        /// History item to unpin.
+        item_id: ClipboardItemId,
+    },
+    /// Copy an item back to the system clipboard without recording a new row.
+    CopyItem {
+        /// History item whose payload should be copied.
+        item_id: ClipboardItemId,
+    },
     /// Ask the daemon to paste an item (not implemented in this phase).
     Paste {
         /// History item to paste.
@@ -116,6 +131,20 @@ pub enum Response {
     Cleared {
         /// Rows removed.
         count: u64,
+    },
+    /// Pin/unpin result.
+    Pinned {
+        /// History item.
+        item_id: ClipboardItemId,
+        /// Resulting pin state.
+        pinned: bool,
+    },
+    /// Payload the client should write to the OS clipboard.
+    Copied {
+        /// Item that was copied.
+        item_id: ClipboardItemId,
+        /// Text body. Never populated for hidden/sensitive items.
+        text: String,
     },
     /// Paste accepted by the daemon (not yet executed).
     PasteAccepted,

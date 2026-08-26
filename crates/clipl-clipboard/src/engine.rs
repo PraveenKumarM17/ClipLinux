@@ -149,9 +149,27 @@ impl<S: HistoryStore> HistoryEngine<S> {
         self.store.get(id)
     }
 
-    /// Delete one item.
+    /// Delete one unpinned item. Pinned rows must be unpinned first.
     pub fn delete(&self, id: ClipboardItemId) -> Result<bool> {
+        if let Some(item) = self.store.get(id)? {
+            if item.pinned {
+                return Err(clipl_core::Error::Invalid(
+                    "unpin this item before deleting it".into(),
+                ));
+            }
+        }
         self.store.delete(id)
+    }
+
+    /// Update `last_used_at` without changing content.
+    pub fn touch(&self, id: ClipboardItemId) -> Result<()> {
+        let mut item = self
+            .store
+            .get(id)?
+            .ok_or_else(|| clipl_core::Error::not_found(id.to_string()))?;
+        item.last_used_at = Some(Timestamp::now());
+        item.updated_at = Timestamp::now();
+        self.store.update(&item)
     }
 
     /// Clear unpinned history.
@@ -188,6 +206,14 @@ fn persistable(item: &ClipboardItem) -> bool {
             | clipl_core::ClipboardContent::Html { .. }
             | clipl_core::ClipboardContent::Uri { .. }
     )
+}
+
+/// Strip payloads from sensitive items before they leave the daemon.
+pub fn for_client(mut item: ClipboardItem) -> ClipboardItem {
+    if !item.sensitive.is_empty() {
+        redact_payload(&mut item);
+    }
+    item
 }
 
 fn redact_payload(item: &mut ClipboardItem) {

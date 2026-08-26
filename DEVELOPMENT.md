@@ -8,10 +8,28 @@
 - A C compiler (bundled SQLite). X11 watch also needs a working `$DISPLAY`
   at **runtime**, not at compile time.
 
-Optional, for the desktop UI later:
+Optional, for the desktop UI:
 
 - Node.js 20+
-- WebKitGTK / Tauri system libraries
+- Tauri v2 system libraries (WebKitGTK 4.1). Ubuntu/Debian:
+
+```bash
+sudo apt update
+sudo apt install libwebkit2gtk-4.1-dev \
+  build-essential \
+  pkg-config \
+  libdbus-1-dev \
+  curl \
+  wget \
+  file \
+  libxdo-dev \
+  libssl-dev \
+  libayatana-appindicator3-dev \
+  librsvg2-dev
+```
+
+Workspace `cargo test` does **not** require WebKitGTK. The desktop crate’s
+default features exclude Tauri. `npm run tauri dev` enables `--features tauri-app`.
 
 ## Workspace commands
 
@@ -58,14 +76,35 @@ cargo run -p clipl-daemon -- --diagnose
 Disable the X11 backend at compile time with `--no-default-features` on
 `clipl-platform` if needed; the workspace default enables `x11`.
 
-### Desktop frontend (optional)
+### Desktop + daemon
 
-The Svelte app is a layout placeholder. It is not required for `cargo test`.
+`cargo test --workspace` never starts a display server or `clipl-daemon`.
+
+Run the picker against a live daemon:
+
+```bash
+# Terminal 1 — source of truth
+cargo run -p clipl-daemon
+
+# Terminal 2 — Tauri WebView (requires WebKitGTK)
+cd apps/desktop
+npm install
+npm run test
+npm run build
+npm run tauri dev
+```
+
+`npm run tauri dev` is `tauri dev --features tauri-app`. Vite alone
+(`npm run dev`) cannot talk to the daemon; the UI shows a disconnected state
+instead of crashing.
+
+Frontend checks:
 
 ```bash
 cd apps/desktop
-npm install
-npm run dev
+npm test
+npm run check
+npm run build
 ```
 
 ## Crate layout
@@ -84,5 +123,5 @@ Never commit clipboard dumps.
 
 ## Tasks
 
-`tasks/000-foundation.md` is done. `tasks/001-clipboard-monitoring.md` is this
-phase.
+`tasks/000-foundation.md` and `tasks/001-clipboard-monitoring.md` are done.
+Phase 3A is the production desktop shell.

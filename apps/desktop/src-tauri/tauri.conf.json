@@ -14,16 +14,21 @@
       {
         "label": "palette",
         "title": "ClipLinux",
-        "width": 420,
+        "width": 440,
         "height": 560,
-        "resizable": false,
-        "decorations": false,
+        "minWidth": 360,
+        "minHeight": 420,
+        "resizable": true,
+        "maximizable": false,
+        "decorations": true,
         "visible": true,
-        "skipTaskbar": true
+        "center": true,
+        "skipTaskbar": false
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'",
+      "capabilities": ["default"]
     }
   },
   "bundle": {

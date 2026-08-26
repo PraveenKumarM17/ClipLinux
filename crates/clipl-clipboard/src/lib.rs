@@ -15,7 +15,7 @@ use clipl_core::{
     ClipLinuxConfig, ClipboardBackend, ClipboardItem, ClipboardItemId, PrivacyRule, Result,
 };
 
-pub use engine::{HistoryEngine, RecordOutcome, Recorded};
+pub use engine::{for_client, HistoryEngine, RecordOutcome, Recorded};
 pub use hash::content_hash;
 pub use memory::MemoryHistoryStore;
 pub use sqlite::{SqliteStore, SCHEMA_VERSION};
@@ -175,5 +175,25 @@ mod tests {
         engine.store().insert(&old).unwrap();
         engine.apply_retention().unwrap();
         assert!(engine.get(old.id).unwrap().is_none());
+    }
+
+    #[test]
+    fn refuses_to_delete_pinned() {
+        let history = ClipboardHistory::default();
+        let item = ClipboardItem::text("keep");
+        history.record(&item).unwrap();
+        history.engine().set_pinned(item.id, true).unwrap();
+        assert!(history.engine().delete(item.id).is_err());
+        assert!(history.engine().get(item.id).unwrap().is_some());
+    }
+
+    #[test]
+    fn for_client_hides_sensitive_payload() {
+        let mut item = ClipboardItem::text("super-secret");
+        item.sensitive
+            .push(clipl_core::SensitiveContentType::Password);
+        let out = for_client(item);
+        assert!(out.content.text_for_scan().unwrap().is_empty());
+        assert!(!out.sensitive.is_empty());
     }
 }

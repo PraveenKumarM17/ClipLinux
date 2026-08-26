@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-use clipl_clipboard::{HistoryEngine, RecordOutcome, SqliteStore};
+use clipl_clipboard::{content_hash, for_client, HistoryEngine, RecordOutcome, SqliteStore};
 use clipl_core::placeholders::MemoryClipboard;
 use clipl_core::{
     paths, ClipLinuxConfig, ClipLinuxPaths, ClipboardBackend, ClipboardContent, ClipboardItem,
@@ -98,6 +98,8 @@ pub struct DaemonState {
     status: DaemonStatus,
     shutdown: Arc<AtomicBool>,
     dirs: ClipLinuxPaths,
+    /// Hashes of items the desktop just copied; ingest skips one matching event.
+    skip_copy: Mutex<Option<(String, std::time::Instant)>>,
 }
 
 impl DaemonState {
@@ -111,7 +113,7 @@ impl DaemonState {
             }
             Request::GetHistory { limit } => match self.engine.lock() {
                 Ok(engine) => match engine.list(limit.max(1) as usize) {
-                    Ok(items) => Response::History(items),
+                    Ok(items) => Response::History(items.into_iter().map(for_client).collect()),
                     Err(err) => Response::Error {
                         message: err.to_string(),
                     },
@@ -122,7 +124,7 @@ impl DaemonState {
             },
             Request::SearchHistory { query, limit } => match self.engine.lock() {
                 Ok(engine) => match engine.search(&query, limit.max(1) as usize) {
-                    Ok(items) => Response::History(items),
+                    Ok(items) => Response::History(items.into_iter().map(for_client).collect()),
                     Err(err) => Response::Error {
                         message: err.to_string(),
                     },
@@ -153,6 +155,9 @@ impl DaemonState {
                     message: "history lock poisoned".into(),
                 },
             },
+            Request::PinItem { item_id } => self.set_pin(item_id, true),
+            Request::UnpinItem { item_id } => self.set_pin(item_id, false),
+            Request::CopyItem { item_id } => self.copy_item(item_id),
             Request::ListSnippets => Response::Snippets(Vec::new()),
             Request::ListPrivacyRules => Response::PrivacyRules(default_rules()),
             Request::Paste { .. } => Response::Error {
@@ -161,6 +166,85 @@ impl DaemonState {
             _ => Response::Error {
                 message: "unknown request".into(),
             },
+        }
+    }
+
+    fn set_pin(&self, item_id: clipl_core::ClipboardItemId, pinned: bool) -> Response {
+        match self.engine.lock() {
+            Ok(engine) => match engine.set_pinned(item_id, pinned) {
+                Ok(()) => Response::Pinned { item_id, pinned },
+                Err(err) => Response::Error {
+                    message: err.to_string(),
+                },
+            },
+            Err(_) => Response::Error {
+                message: "history lock poisoned".into(),
+            },
+        }
+    }
+
+    fn copy_item(&self, item_id: clipl_core::ClipboardItemId) -> Response {
+        let Ok(engine) = self.engine.lock() else {
+            return Response::Error {
+                message: "history lock poisoned".into(),
+            };
+        };
+        let item = match engine.get(item_id) {
+            Ok(Some(item)) => item,
+            Ok(None) => {
+                return Response::Error {
+                    message: "item not found".into(),
+                };
+            }
+            Err(err) => {
+                return Response::Error {
+                    message: err.to_string(),
+                };
+            }
+        };
+        if !item.sensitive.is_empty() {
+            return Response::Error {
+                message: "hidden items cannot be copied".into(),
+            };
+        }
+        let Some(text) = item.content.text_for_scan().map(str::to_string) else {
+            return Response::Error {
+                message: "only text items can be copied in this phase".into(),
+            };
+        };
+        let hash = if item.content_hash.is_empty() {
+            content_hash(&item.content)
+        } else {
+            item.content_hash.clone()
+        };
+        if let Err(err) = engine.touch(item_id) {
+            return Response::Error {
+                message: err.to_string(),
+            };
+        }
+        drop(engine);
+        if let Ok(mut skip) = self.skip_copy.lock() {
+            *skip = Some((hash, std::time::Instant::now()));
+        }
+        Response::Copied { item_id, text }
+    }
+
+    fn should_skip_copy(&self, hash: &str) -> bool {
+        let Ok(mut skip) = self.skip_copy.lock() else {
+            return false;
+        };
+        let Some((stored, at)) = skip.as_ref() else {
+            return false;
+        };
+        if at.elapsed() > Duration::from_secs(3) {
+            *skip = None;
+            return false;
+        }
+        if stored == hash {
+            *skip = None;
+            true
+        } else {
+            false
         }
     }
 }
@@ -219,6 +303,7 @@ pub fn run_with_backend(
         status,
         shutdown: Arc::clone(&shutdown),
         dirs,
+        skip_copy: Mutex::new(None),
     });
 
     let watch_thread = if selected.backend.supports_watch() {
@@ -277,6 +362,11 @@ fn ingest(state: &DaemonState, content: ClipboardContent) {
             | ClipboardContent::Uri { .. }
     ) {
         tracing::debug!("ignored non-text clipboard event");
+        return;
+    }
+    let hash = content_hash(&content);
+    if state.should_skip_copy(&hash) {
+        tracing::debug!("skipped clipboard echo from palette copy");
         return;
     }
     let item = ClipboardItem {
@@ -461,6 +551,28 @@ mod tests {
             items.len() == 1 && items[0].content.text_for_scan() == Some("from-mock")
         });
         assert_eq!(items[0].content.text_for_scan(), Some("from-mock"));
+        let item_id = items[0].id;
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::PinItem { item_id }).unwrap() {
+            Response::Pinned { pinned, .. } => assert!(pinned),
+            other => panic!("unexpected {other:?}"),
+        }
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::CopyItem { item_id }).unwrap() {
+            Response::Copied { text, .. } => assert_eq!(text, "from-mock"),
+            other => panic!("unexpected {other:?}"),
+        }
+        producer
+            .write(&ClipboardItem::text("from-mock").content)
+            .unwrap();
+        thread::sleep(Duration::from_millis(250));
+        let listed = wait_history(&sock, |rows| rows.len() == 1);
+        assert_eq!(listed.len(), 1);
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::DeleteItem { item_id }).unwrap() {
+            Response::Error { message } => assert!(message.contains("unpin")),
+            other => panic!("unexpected {other:?}"),
+        }
         shutdown.store(true, Ordering::SeqCst);
         thread.join().unwrap();
     }

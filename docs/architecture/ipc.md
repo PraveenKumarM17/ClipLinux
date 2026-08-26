@@ -13,21 +13,30 @@ Status: **IMPLEMENTED** (Unix-domain socket, request/response).
 
 Protocol version: `clipl_protocol::PROTOCOL_VERSION` (currently `1`).
 
-## Requests (Phase 2)
+## Requests
 
 | Request | Response |
 | --- | --- |
 | `Ping` | `Pong` |
 | `GetStatus` | `Status(DaemonStatus)` |
 | `GetCapabilities` | `Capabilities(...)` |
-| `GetHistory { limit }` | `History(items)` |
+| `GetHistory { limit }` | `History(items)` (payloads redacted when sensitive) |
 | `SearchHistory { query, limit }` | `History(items)` |
-| `DeleteItem { item_id }` | `Deleted { existed }` |
+| `DeleteItem { item_id }` | `Deleted { existed }` (pinned items are refused) |
 | `ClearHistory` | `Cleared { count }` (unpinned only) |
+| `PinItem { item_id }` / `UnpinItem { item_id }` | `Pinned { item_id, pinned }` |
+| `CopyItem { item_id }` | `Copied { item_id, text }` then the client writes the OS clipboard |
+
+History replies are sanitized with `for_client`: hidden items keep their
+metadata but not the secret payload.
+
+`CopyItem` records a skip-hash on the daemon so the watch thread does not
+insert a duplicate row for the echo (about 3 seconds). Hidden items cannot be
+copied.
 
 `DaemonStatus` contains paths, backend name, and monitoring level. It does **not** contain clipboard payloads.
 
-One request per connection (CLI opens a new socket per command).
+One request per connection (CLI and desktop open a new socket per command).
 
 ## PLANNED
 

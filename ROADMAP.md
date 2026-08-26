@@ -2,7 +2,7 @@
 
 Status of the product relative to the [master plan](MASTER_PLAN.md).
 
-## Current milestone: Clipboard history (Phase 2)
+## Current milestone: Production desktop shell (Phase 3A)
 
 - [x] Cargo workspace and crate boundaries
 - [x] Domain types and traits
@@ -12,17 +12,19 @@ Status of the product relative to the [master plan](MASTER_PLAN.md).
 - [x] Unix-domain IPC + CLI history commands
 - [x] X11 CLIPBOARD watch via XFixes (text)
 - [x] Honest Wayland / GNOME Unsupported watch
+- [x] Tauri v2 + Svelte history picker (daemon IPC, search, pin/delete/copy)
 - [ ] Global hotkeys / overlay popup
-- [ ] Tauri webview runtime
+- [ ] Emoji / symbols / snippets catalogs in the UI
 - [ ] Remote media providers
 - [ ] GNOME Shell extension clipboard bridge
 
-## Milestone C — Palette UI
+## Milestone C — Palette UI (partial: Phase 3A)
 
-**Ships:** Tauri v2 window, keyboard navigation, emoji/symbols/snippets panes
-talking to the daemon.
+**Ships:** Tauri v2 picker window, daemon IPC, clipboard history, search,
+keyboard navigation, pin/delete/clear, daemon status, placeholder panes.
 
-**Does not ship:** GIF search, sticker store.
+**Does not ship:** global Super+V, auto-paste, emoji database, GIF search,
+sticker store, packaging.
 
 ## Milestone D — Desktop environment adapters
 

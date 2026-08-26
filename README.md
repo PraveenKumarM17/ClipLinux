@@ -7,10 +7,10 @@ stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-**Current milestone:** clipboard history daemon (text), SQLite, Unix IPC, X11
-watch. Wayland clipboard monitoring is **unsupported** until a compositor
-adapter or GNOME extension exists. Global shortcuts and the Tauri UI are not
-in this phase.
+**Current milestone:** production desktop shell (Phase 3A). Clipboard history
+daemon, SQLite, Unix IPC, X11 watch, and a Tauri + Svelte picker that talks to
+the daemon. Wayland clipboard monitoring is **unsupported** until a compositor
+adapter or GNOME extension exists. Global hotkeys are not in this phase.
 
 ## Quick start
 
@@ -21,6 +21,18 @@ cargo run -p clipl-daemon          # start (Ctrl+C to stop)
 cargo run -p clipl -- doctor
 cargo run -p clipl -- status
 cargo run -p clipl -- history --limit 20
+```
+
+Desktop picker (requires the daemon and Tauri system libraries):
+
+```bash
+# Terminal 1
+cargo run -p clipl-daemon
+
+# Terminal 2
+cd apps/desktop
+npm install
+npm run tauri dev
 ```
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
@@ -40,6 +52,8 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 | [docs/architecture/daemon.md](docs/architecture/daemon.md) | Daemon behaviour |
 | [docs/architecture/ipc.md](docs/architecture/ipc.md) | Unix socket protocol |
 | [docs/architecture/storage.md](docs/architecture/storage.md) | SQLite schema and paths |
+| [docs/architecture/desktop.md](docs/architecture/desktop.md) | Tauri + Svelte picker |
+| [docs/architecture/desktop-daemon-boundary.md](docs/architecture/desktop-daemon-boundary.md) | Why the UI never opens SQLite |
 
 ## Layout
 
