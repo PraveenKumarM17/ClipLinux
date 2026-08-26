@@ -9,6 +9,7 @@
   import StatusIndicator from "./lib/components/StatusIndicator.svelte";
   import SymbolsPane from "./lib/components/SymbolsPane.svelte";
   import TabBar from "./lib/components/TabBar.svelte";
+  import UniversalSearch from "./lib/components/UniversalSearch.svelte";
   import * as api from "./lib/api/desktop";
   import {
     closeVariants,
@@ -18,21 +19,30 @@
     movePicker,
     openVariants,
     picker,
-    schedulePickerLoad,
     toggleFavorite,
   } from "./lib/stores/picker.svelte";
   import {
-    cancelConfirm,
     clearSearch,
+    copyUniversal,
+    jumpToTab,
+    loadUniversal,
+    moveUniversal,
+    selectedHit,
+    setQuery,
+    toggleUniversalFavorite,
+    universal,
+  } from "./lib/stores/search.svelte";
+  import {
+    cancelConfirm,
     closeApp,
     confirmAction,
     copySelected,
     moveSelection,
     requestClear,
     requestDelete,
+    requestDeleteItem,
     retryNow,
     session,
-    setQuery,
     startSession,
     togglePin,
   } from "./lib/stores/session.svelte";
@@ -40,6 +50,7 @@
   import { escapeOutcome } from "./lib/utils/escape";
   import { listSurface } from "./lib/utils/historyView";
   import { navAction } from "./lib/utils/keyboard";
+  import { isUniversalQuery } from "./lib/utils/searchHits";
 
   let now = $state(Date.now());
   const surface = $derived(
@@ -60,13 +71,8 @@
         ? session.connection.message
         : (session.historyError ?? ""),
   );
-  const searchPlaceholder = $derived(
-    session.tab === "emoji"
-      ? "Search emoji…"
-      : session.tab === "symbols"
-        ? "Search symbols and kaomoji…"
-        : "Search clipboard history…",
-  );
+  const searching = $derived(isUniversalQuery(session.query));
+  const searchPlaceholder = "Search history, emoji, symbols…";
 
   onMount(() => {
     startSession();
@@ -88,7 +94,7 @@
   $effect(() => {
     if (session.connection.kind === "connected") {
       void loadSkinPref();
-      if (session.tab === "emoji" || session.tab === "symbols") {
+      if (!searching && (session.tab === "emoji" || session.tab === "symbols")) {
         void loadPicker();
       }
     }
@@ -102,15 +108,30 @@
 
   function onQuery(value: string): void {
     setQuery(value);
-    if (session.tab !== "history") {
-      schedulePickerLoad();
-    }
   }
 
   function selectTab(tab: TabId): void {
     session.tab = tab;
+    if (searching) {
+      jumpToTab(tab);
+      return;
+    }
     if (tab === "emoji" || tab === "symbols") {
       void loadPicker();
+    }
+  }
+
+  async function afterHistoryMutation(): Promise<void> {
+    await confirmAction();
+    if (searching) {
+      await loadUniversal();
+    }
+  }
+
+  async function pinUniversal(id: string, pinned: boolean): Promise<void> {
+    await togglePin(id, pinned);
+    if (searching) {
+      await loadUniversal();
     }
   }
 
@@ -121,7 +142,7 @@
         cancelConfirm();
       } else if (event.key === "Enter") {
         event.preventDefault();
-        void confirmAction();
+        void afterHistoryMutation();
       }
       return;
     }
@@ -147,11 +168,34 @@
       if (escapeOutcome(session.query) === "clear-search") {
         clearSearch();
         focusSearch();
-        if (session.tab !== "history") {
-          void loadPicker();
-        }
       } else {
         void closeApp();
+      }
+      return;
+    }
+
+    if (searching) {
+      if (action === "up" || action === "down") {
+        event.preventDefault();
+        moveUniversal(action === "down" ? 1 : -1);
+        return;
+      }
+      if (action === "copy") {
+        event.preventDefault();
+        void copyUniversal();
+        return;
+      }
+      if (action === "favorite") {
+        event.preventDefault();
+        void toggleUniversalFavorite();
+        return;
+      }
+      if (action === "delete") {
+        event.preventDefault();
+        const hit = selectedHit();
+        if (hit?.source === "history") {
+          requestDeleteItem(hit.row);
+        }
       }
       return;
     }
@@ -234,7 +278,52 @@
 
   <TabBar active={session.tab} onSelect={selectTab} />
 
-  {#if session.tab === "history"}
+  {#if searching}
+    <section class="pane" aria-label="Search results">
+      {#if session.connection.kind === "starting"}
+        <EmptyState title="Starting" detail="Connecting to the ClipLinux daemon…" />
+      {:else if session.connection.kind === "disconnected"}
+        <EmptyState
+          title="ClipLinux daemon is not running."
+          detail="Start the daemon, then retry. Search needs the daemon."
+          secondary={startCommand}
+          actionLabel="Retry"
+          onAction={retryNow}
+        />
+      {:else if session.connection.kind === "error"}
+        <EmptyState title="Daemon error" detail={errorDetail} actionLabel="Retry" onAction={retryNow} />
+      {:else if universal.error}
+        <EmptyState title="Search failed" detail={universal.error} />
+      {:else if universal.hits.length === 0 && universal.loading}
+        <EmptyState title="Searching" detail="Looking through history, emoji, symbols, and kaomoji…" />
+      {:else if universal.hits.length === 0}
+        <EmptyState
+          title="No results"
+          detail={`Nothing in history, emoji, symbols, or kaomoji matched “${session.query.trim()}”.`}
+        />
+      {:else}
+        <UniversalSearch
+          hits={universal.hits}
+          selectedKey={selectedHit()?.key ?? null}
+          {now}
+          onSelect={(key) => {
+            const idx = universal.hits.findIndex((hit) => hit.key === key);
+            if (idx >= 0) {
+              universal.selected = idx;
+            }
+          }}
+          onPin={(id, pinned) => void pinUniversal(id, pinned)}
+          onDelete={(id) => {
+            const hit = universal.hits.find((row) => row.source === "history" && row.row.id === id);
+            if (hit?.source === "history") {
+              requestDeleteItem(hit.row);
+            }
+          }}
+          onActivate={() => void copyUniversal()}
+        />
+      {/if}
+    </section>
+  {:else if session.tab === "history"}
     <section class="pane" aria-label="Clipboard history">
       {#if surface === "starting"}
         <EmptyState title="Starting" detail="Connecting to the ClipLinux daemon…" />
@@ -304,7 +393,7 @@
     title="Delete this item?"
     detail={session.confirm.preview || "Remove this unpinned clipboard item from history."}
     confirmLabel="Delete"
-    onConfirm={() => void confirmAction()}
+    onConfirm={() => void afterHistoryMutation()}
     onCancel={cancelConfirm}
   />
 {:else if session.confirm?.kind === "clear"}
@@ -312,7 +401,7 @@
     title="Clear unpinned history?"
     detail="Pinned items are kept. This cannot be undone."
     confirmLabel="Clear"
-    onConfirm={() => void confirmAction()}
+    onConfirm={() => void afterHistoryMutation()}
     onCancel={cancelConfirm}
   />
 {/if}

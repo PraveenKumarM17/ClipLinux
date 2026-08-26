@@ -1,6 +1,5 @@
 import type { ConnectionView, HistoryRow } from "../api/desktop";
 import * as api from "../api/desktop";
-import { debounce } from "../utils/debounce";
 import { nextIndex } from "../utils/keyboard";
 
 export type TabId = "history" | "emoji" | "symbols" | "snippets";
@@ -24,7 +23,6 @@ export const session = $state({
   loadingHistory: false,
 });
 
-const SEARCH_DEBOUNCE_MS = 180;
 const POLL_MS = 4000;
 const BACKOFF_MAX = 16_000;
 
@@ -63,14 +61,12 @@ async function loadHistory(): Promise<void> {
   if (session.connection.kind !== "connected") {
     return;
   }
-  if (session.tab !== "history") {
+  if (session.tab !== "history" || session.query.trim().length > 0) {
     return;
   }
   session.loadingHistory = true;
   try {
-    const rows = session.query.trim()
-      ? await api.searchHistory(session.query)
-      : await api.getHistory();
+    const rows = await api.getHistory();
     session.items = rows;
     session.historyError = null;
     preserveSelection(rows);
@@ -82,19 +78,9 @@ async function loadHistory(): Promise<void> {
   }
 }
 
-const debouncedSearch = debounce(() => {
-  void loadHistory();
-}, SEARCH_DEBOUNCE_MS);
-
-export function setQuery(value: string): void {
-  session.query = value;
-  debouncedSearch();
-}
-
-export function clearSearch(): void {
-  debouncedSearch.cancel();
-  session.query = "";
-  void loadHistory();
+/** Recent history for the History tab (browse, not universal search). */
+export async function reloadHistory(): Promise<void> {
+  await loadHistory();
 }
 
 function stopPoll(): void {
@@ -109,7 +95,11 @@ function startPoll(): void {
     return;
   }
   pollTimer = setInterval(() => {
-    if (session.connection.kind === "connected" && session.tab === "history") {
+    if (
+      session.connection.kind === "connected" &&
+      session.tab === "history" &&
+      session.query.trim().length === 0
+    ) {
       void loadHistory();
     }
   }, POLL_MS);
@@ -181,12 +171,7 @@ export function selectedItem(): HistoryRow | undefined {
   return session.items.find((item) => item.id === session.selectedId) ?? session.items[0];
 }
 
-export async function copySelected(): Promise<void> {
-  const item = selectedItem();
-  if (!item) {
-    setNotice("Nothing to copy.");
-    return;
-  }
+export async function copyHistoryRow(item: HistoryRow): Promise<void> {
   if (item.hidden) {
     setNotice("Hidden items cannot be copied.");
     return;
@@ -200,6 +185,23 @@ export async function copySelected(): Promise<void> {
   }
 }
 
+export async function copySelected(): Promise<void> {
+  const item = selectedItem();
+  if (!item) {
+    setNotice("Nothing to copy.");
+    return;
+  }
+  await copyHistoryRow(item);
+}
+
+export function requestDeleteItem(item: HistoryRow): void {
+  if (item.pinned) {
+    setNotice("Unpin this item before deleting it.");
+    return;
+  }
+  session.confirm = { kind: "delete", id: item.id, preview: item.preview };
+}
+
 export function requestDelete(id?: string): void {
   const item = id
     ? session.items.find((row) => row.id === id)
@@ -207,11 +209,7 @@ export function requestDelete(id?: string): void {
   if (!item) {
     return;
   }
-  if (item.pinned) {
-    setNotice("Unpin this item before deleting it.");
-    return;
-  }
-  session.confirm = { kind: "delete", id: item.id, preview: item.preview };
+  requestDeleteItem(item);
 }
 
 export function requestClear(): void {

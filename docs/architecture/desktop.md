@@ -32,13 +32,18 @@ needs WebKitGTK on the host.
 On startup the host connects to `clipl-daemon`, fetches status and recent
 history, focuses search, and **subscribes** for activation events.
 
+The search box is **universal**. A non-empty query searches clipboard
+history, emoji, symbols, and kaomoji together and shows grouped results.
+Empty query browses the selected tab (history list or emoji/symbol
+categories). Snippets are not searched yet.
+
 | Tab | Status |
 | --- | --- |
-| History | Functional: list, search, pin, delete, clear, copy |
+| History | Functional: list, pin, delete, clear, copy |
 | Emoji / Symbols | Functional offline pickers |
 | Snips | Placeholder |
 
-Keyboard (history tab):
+Keyboard (universal search and history browse):
 
 | Key | Action |
 | --- | --- |

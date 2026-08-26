@@ -4,7 +4,7 @@
   let {
     value,
     onQuery,
-    placeholder = "Search clipboard history…",
+    placeholder = "Search history, emoji, symbols…",
   }: {
     value: string;
     onQuery: (next: string) => void;
@@ -19,7 +19,7 @@
 </script>
 
 <label class="search">
-  <span class="sr-only">Search clipboard history</span>
+  <span class="sr-only">Search ClipLinux</span>
   <span class="icon" aria-hidden="true">⌕</span>
   <input
     id="clipl-search"
