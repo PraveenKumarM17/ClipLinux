@@ -2,7 +2,9 @@
 
 Status of the product relative to the [master plan](MASTER_PLAN.md).
 
-## Current milestone: Activation (Phase 4A)
+## Latest completed: Activation (Phase 4A)
+
+Statically validated. GNOME Shell Super+V was **not** runtime-tested.
 
 - [x] Cargo workspace and crate boundaries
 - [x] Domain types and traits
@@ -23,17 +25,23 @@ Status of the product relative to the [master plan](MASTER_PLAN.md).
 - [ ] Remote media providers
 - [ ] GNOME Shell extension clipboard bridge
 
+## Next (not started)
+
+Snippets UI, then settings. Not GIFs, stickers, cloud sync, or packaging.
+
 ## Milestone C — Palette UI (Phase 3A + 3B)
 
-**Ships:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
+**Shipped:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
 kaomoji, daemon IPC, keyboard navigation.
 
 **Does not ship:** auto-paste, GIF search, sticker store, packaging, snippets UI.
 
-## Milestone D — Activation & desktop adapters (Phase 4A started)
+## Milestone D — Activation & desktop adapters (Phase 4A complete)
 
-**Ships in 4A:** X11 native shortcut, GNOME Shell **activation** extension,
-desktop show/hide/toggle, CLI fallback.
+**Shipped in 4A (statically validated):** X11 native shortcut, GNOME Shell
+**activation** extension, desktop show/hide/toggle, CLI fallback.
+
+**Not runtime-tested:** live Super+V on GNOME Shell.
 
 **Does not ship:** KDE backend, Sway/Hyprland in-process grabs, generic Wayland
 global hotkeys, GNOME clipboard push.
@@ -41,6 +49,8 @@ global hotkeys, GNOME clipboard push.
 ## Milestone E — Media
 
 **Ships:** local stickers + one remote `MediaProvider` + on-disk cache.
+
+**Not started.** `clipl-media` is a registry with an empty sticker library.
 
 ## Future
 
@@ -56,3 +66,5 @@ global hotkeys, GNOME clipboard push.
 - Polling `xclip` / `wl-paste` as the default watch path
 - Bundling a single GIF vendor into `clipl-core`
 - Collecting clipboard contents for analytics
+- Accounts, cloud sync, telemetry, or a ClipLinux backend server
+- Fake universal Wayland global hotkeys

@@ -29,7 +29,20 @@ apps/desktop/src-tauri/gen/
 data/local/
 *.sqlite
 *.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
 *.db
+*.db-wal
+*.db-shm
+
+# Runtime Unix sockets
+*.sock
+
+# GNOME compiled schemas (glib-compile-schemas)
+gschemas.compiled
 
 # Coverage / profiling
 coverage/

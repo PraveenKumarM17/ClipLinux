@@ -7,10 +7,12 @@ stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-**Current milestone:** capability-based picker activation (Phase 4A). X11
-registers Super+V (configurable) via `XGrabKey`. GNOME Wayland uses the
-Shell extension in `extensions/gnome`. Wayland clipboard monitoring is still
-**unsupported**. GIFs/stickers are not in this phase.
+**Latest completed milestone:** capability-based picker activation (Phase 4A).
+X11 registers Super+V (configurable) via `XGrabKey`. GNOME Wayland uses the
+Shell extension in `extensions/gnome`. That extension is **statically
+validated**, not GNOME-runtime-tested. Wayland clipboard monitoring is still
+**unsupported**. GIFs, stickers, snippets UI, cloud sync, and packaging are
+not implemented.
 
 ## Quick start
 
@@ -68,9 +70,11 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 ```
 apps/          desktop (Tauri + Svelte), daemon, CLI
 crates/        Rust libraries; core has no UI toolkit dependency
-extensions/    GNOME Shell activation extension; KDE placeholder
-packages/      emoji data, sticker packs, themes
+extensions/    GNOME Shell activation extension; KDE planned slot
+packages/      emoji data; sticker packs and themes (planned)
 docs/          additional architecture notes
+tasks/         completed historical tasks
+scripts/       workspace quality checks
 ```
 
 Licensed under MIT OR Apache-2.0.

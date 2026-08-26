@@ -114,7 +114,8 @@ GNOME Wayland uses a Shell extension. See
 
 ### Desktop (`apps/desktop`)
 
-- **UI:** Svelte 5 + TypeScript + Vite (history picker; other tabs are placeholders)
+- **UI:** Svelte 5 + TypeScript + Vite (history, emoji, symbols/kaomoji;
+  snippets tab is an unimplemented placeholder)
 - **Shell:** Tauri v2, application id `io.clipl.ClipLinux`
 - **Host:** `apps/desktop/src-tauri` talks to `clipl-daemon` over `clipl-protocol`.
   It does not open SQLite. Default Cargo features omit Tauri so workspace tests
@@ -137,11 +138,12 @@ and `history` talk to the daemon over the Unix socket.
 
 ## Extensions and packages
 
-- `extensions/gnome` — Shell extension (activation shortcut → Unix IPC)
-- `extensions/kde` — Plasma integration (placeholder)
-- `packages/emoji-data` — catalog JSON
-- `packages/sticker-packs` — local packs
-- `packages/themes` — design tokens (data, not code)
+- `extensions/gnome` — Shell extension (activation shortcut → Unix IPC;
+  statically validated, not GNOME-runtime-tested)
+- `extensions/kde` — Plasma integration (**planned / not implemented**)
+- `packages/emoji-data` — Unicode 17.0 compact catalog JSON
+- `packages/sticker-packs` — local packs (**planned / not implemented**)
+- `packages/themes` — design tokens (**planned**; UI CSS is currently hardcoded)
 
 ## Storage
 

@@ -10,14 +10,16 @@ dashboard. The process stays running when the window is hidden.
 
 ```
 apps/desktop/
-  src/                 Svelte UI (history, search, placeholders)
+  src/                 Svelte UI (history, emoji, symbols/kaomoji; snippets placeholder)
   src-tauri/           Rust host (IPC client + Tauri commands)
   scripts/tauri.sh     Enables the `tauri-app` Cargo feature for WebView builds
 ```
 
 The Rust crate is a workspace member. **Default features are empty** so
 `cargo test --workspace` does not link WebKitGTK. Production builds pass
-`--features tauri-app` (the npm `tauri` script does this).
+`--features tauri-app` (the npm `tauri` script does this). Workspace tests
+do not launch the WebView; `npm run tauri dev` is a separate runtime that
+needs WebKitGTK on the host.
 
 ## Window
 

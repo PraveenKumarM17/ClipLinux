@@ -38,7 +38,7 @@ cargo fmt --all
 cargo check --workspace --all-targets
 cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
-bash scripts/check.sh
+bash scripts/check.sh   # fmt, check, test, clippy, markdown links, GNOME schemas
 ```
 
 Default tests never open the host clipboard. They use `MemoryClipboard` and
@@ -126,8 +126,10 @@ Never commit clipboard dumps.
 
 ## Tasks
 
-`tasks/000-foundation.md` and `tasks/001-clipboard-monitoring.md` are done.
-Phase 3A is the production desktop shell. Phase 3B is the offline emoji and
-symbols engine. Phase 4A is capability-based activation (`clipl open` /
-GNOME extension / X11 `XGrabKey`). See
-[extensions/gnome/README.md](extensions/gnome/README.md).
+`tasks/000-foundation.md` and `tasks/001-clipboard-monitoring.md` are
+historical and complete. See [tasks/README.md](tasks/README.md). Current
+status is [ROADMAP.md](ROADMAP.md). Phase 3A is the production desktop
+shell. Phase 3B is the offline emoji and symbols engine. Phase 4A is
+capability-based activation (`clipl open` / GNOME extension / X11
+`XGrabKey`). The GNOME extension is statically validated, not
+runtime-tested. See [extensions/gnome/README.md](extensions/gnome/README.md).

@@ -18,4 +18,14 @@ cargo test --workspace
 echo "==> cargo clippy"
 cargo clippy --workspace --all-targets -- -D warnings
 
+echo "==> markdown links"
+python3 scripts/check-md-links.py
+
+if command -v glib-compile-schemas >/dev/null 2>&1; then
+  echo "==> GNOME schemas"
+  glib-compile-schemas --dry-run extensions/gnome/schemas
+else
+  echo "==> GNOME schemas (skipped: glib-compile-schemas not installed)"
+fi
+
 echo "All checks passed."

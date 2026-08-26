@@ -23,7 +23,7 @@ The source of truth at runtime is `PlatformCapabilities` plus
 | X11 + XFixes | `x11` | **IMPLEMENTED** Native (text) | **IMPLEMENTED** Native (`XFixesSelectionNotify`) | CLIPBOARD by default; PRIMARY optional via config |
 | X11 connect fail | `x11-unavailable` | Unsupported | Unsupported | Diagnose prints the error |
 | Generic Wayland | `wayland-generic` | **UNSUPPORTED** | **UNSUPPORTED** | No portable protocol; does **not** poll `wl-paste` |
-| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Needs Shell extension (`extensions/gnome`) |
+| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Clipboard watch needs a **future** clipboard-bridge extension. `extensions/gnome` currently provides **activation only**. |
 | KDE / Hyprland / Sway / wlroots | slot only | **PLANNED** | **PLANNED** | Named adapters, not implemented |
 | Unknown session | `none` | Unknown | Unknown | Watch not started |
 

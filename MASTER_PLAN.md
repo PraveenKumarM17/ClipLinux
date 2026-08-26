@@ -13,9 +13,13 @@ The product is an ecosystem, not a single window:
 5. **Extensible content** — replaceable GIF providers, local sticker packs,
    community packs, themes, plugin-ready interfaces.
 
-This file is the delivery sequence. Implementation details live in
+This file is the **delivery sequence and product constraints**. The live
+checklist is [ROADMAP.md](ROADMAP.md). Implementation details live in
 [ARCHITECTURE.md](ARCHITECTURE.md). Dates are deliberately omitted; each
 milestone ends when its exit criteria are met, not when a calendar says so.
+
+Completed phases below are historical. They describe what shipped, not what to
+rebuild.
 
 ## Principles that constrain every milestone
 
@@ -32,6 +36,7 @@ milestone ends when its exit criteria are met, not when a calendar says so.
   without a network.
 - Media providers are replaceable. No provider is hardcoded into core.
 - Electron is out of scope forever.
+- Offline-first, local-only, no account, no cloud sync, no telemetry.
 - The tree must stay approachable for first-time open-source contributors.
 
 ## Phase 0 — Foundation
@@ -58,29 +63,47 @@ and documentation. Exit: `cargo test --workspace` passed.
 - If watch is `Unsupported`, the daemon still serves IPC; it does not poll
   `xclip` / `wl-paste`
 
-**Out of this phase:** global hotkeys, overlay, auto-paste, Tauri UI, GIF APIs,
-GNOME/KDE extension implementations.
+**Did not ship in this phase:** global hotkeys, overlay, auto-paste, Tauri UI,
+GIF APIs, GNOME/KDE extension implementations. Those came later or remain
+planned.
 
-## Phase 3 — Desktop palette shell
+## Phase 3 — Desktop palette (ROADMAP 3A + 3B)
 
-- Wire Tauri v2 to the Svelte 5 UI
-- Keyboard-first popup, themed from `packages/themes`
-- Talk to the daemon; never embed compositor logic in Svelte
+**Status:** complete for history, emoji, and symbols. Snippets UI is not
+implemented.
 
-## Phase 4 — Emoji, symbols, snippets (offline)
+- Tauri v2 + Svelte 5 picker talks to `clipl-daemon` over Unix IPC
+- History search, pin, delete, clear, copy (desktop never opens SQLite)
+- Unicode 17.0 emoji catalog, search, categories, skin tones, favorites
+- Curated symbols and kaomoji picker
+- Snippets tab is an honest placeholder
+- Theme JSON in `packages/themes` exists as a future token source; the UI
+  currently uses hardcoded CSS in `apps/desktop/src/app.css`
 
-- Load `packages/emoji-data`
-- Symbol catalog expansion
-- Snippet CRUD in the UI
-- Paste via the backend that Phase 2 proved
+## Phase 4 — Activation (ROADMAP 4A)
 
-## Phase 5 — Desktop-environment adapters
+**Status:** complete and **statically validated**. The GNOME Shell shortcut
+path was **not** runtime-tested (no live Super+V session test).
 
-- GNOME extension and KDE integration as first-class adapters
-- Generic Wayland and wlroots adapters with explicit `SupportLevel`
-- Hyprland and Sway remain named slots until a maintainer owns them
+- X11 `XGrabKey` of `activation.shortcut` (never on Wayland)
+- GNOME Shell extension `clipl@io.clipl` sends `ToggleDesktop` over the
+  local socket
+- `clipl open` / `hide` / `toggle`
+- KDE / Sway / Hyprland remain named slots, not implementations
+
+There is no fake universal Wayland global hotkey.
+
+## Phase 5 — Remaining desktop-environment adapters
+
+**Status:** planned.
+
+- KDE Plasma global shortcut / documented Plasma APIs
+- GNOME clipboard **bridge** (the current extension is activation only)
+- Hyprland and Sway remain compositor-config bindings, not in-process grabs
 
 ## Phase 6 — Media and stickers
+
+**Status:** planned. `clipl-media` is a registry + empty sticker library.
 
 - Local sticker scanner
 - First remote GIF provider behind `MediaProvider`
@@ -88,12 +111,15 @@ GNOME/KDE extension implementations.
 
 ## Phase 7 — Ecosystem
 
+**Status:** planned.
+
 - Community pack format
-- Theme documentation
+- Theme documentation and loading `packages/themes` into the UI
 - Plugin-ready provider traits stabilized (no dynamic loading required yet)
 
 ## Ownership of later work
 
-Phase 2 is complete. Do not start global shortcuts, overlay, or the Tauri
-production UI until the history daemon is the agreed IPC source. Guessing
-Wayland clipboard behavior from X11 code remains a defect, not a shortcut.
+Do not start snippets UI, GIFs, stickers, cloud sync, packaging, or new
+platform backends from a cleanup pass. The next product work is listed in
+[ROADMAP.md](ROADMAP.md). Guessing Wayland clipboard behavior from X11 code
+remains a defect, not a shortcut.

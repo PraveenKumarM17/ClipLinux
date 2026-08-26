@@ -11,8 +11,9 @@ every compositor.
 2. Read [PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md) if you touch
    sessions, clipboards, or hotkeys.
 3. Read [PRIVACY_MODEL.md](PRIVACY_MODEL.md) if you touch history or media.
-4. Check [ROADMAP.md](ROADMAP.md). Clipboard monitoring is **not** open for
-   drive-by implementation until the foundation milestone is accepted.
+4. Check [ROADMAP.md](ROADMAP.md) for the current milestone. Clipboard
+   monitoring, the history picker, emoji/symbols, and Phase 4A activation are
+   already implemented; do not re-open those unless you are fixing a bug.
 
 ## Setup
 
@@ -38,7 +39,7 @@ cargo fmt --all
   a named `Fallback` and this is written into `PLATFORM_CAPABILITIES.md`.
 - **Do not log clipboard contents.** Doctor output is identity + capabilities.
 - **Placeholders stay placeholders** until their milestone. Do not “just add
-  xclip” in the daemon stub.
+  xclip” in the daemon, and do not mark planned directories as supported.
 
 ## Crate ownership cheat sheet
 

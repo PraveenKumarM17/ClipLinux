@@ -24,7 +24,8 @@ Types live in `clipl-core`; the engine lives in `clipl-privacy`.
 | Capability matrix | Memory / diagnostics | Not sensitive |
 | Crash logs | Local | Must not include clipboard payloads |
 
-Images and files are **not** persisted in Phase 2.
+Images and files are **not** persisted yet. Only text/HTML/URI that pass
+policy are stored.
 
 ## Detectors (IMPLEMENTED, conservative)
 

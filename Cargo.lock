@@ -472,7 +472,6 @@ dependencies = [
  "clipl-core",
  "clipl-platform",
  "clipl-protocol",
- "serde",
  "serde_json",
 ]
 
@@ -526,7 +525,6 @@ dependencies = [
  "clipl-core",
  "clipl-protocol",
  "serde",
- "serde_json",
  "tauri",
  "tauri-build",
  "tempfile",
@@ -582,7 +580,6 @@ name = "clipl-snippets"
 version = "0.1.0"
 dependencies = [
  "clipl-core",
- "serde",
  "serde_json",
 ]
 
