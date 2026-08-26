@@ -9,6 +9,12 @@ describe("navAction", () => {
     );
     expect(navAction({ key: "j", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false })).toBe("down");
     expect(navAction({ key: "k", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false })).toBe("up");
+    expect(
+      navAction({ key: "ArrowLeft", ctrlKey: false, shiftKey: false, altKey: false, metaKey: false }),
+    ).toBe("left");
+    expect(
+      navAction({ key: "d", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false }),
+    ).toBe("favorite");
   });
 
   it("copies with Enter even inside the search field", () => {

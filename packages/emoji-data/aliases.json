@@ -1,0 +1,17 @@
+{
+  "🐧": ["linux", "tux", "penguin"],
+  "🚀": ["rocket", "ship", "launch", "space"],
+  "🔥": ["fire", "hot", "lit", "flame"],
+  "👍": ["thumb", "thumbs", "like", "yes", "ok", "approve"],
+  "👎": ["thumb", "thumbs", "dislike", "no", "reject"],
+  "💻": ["computer", "laptop", "pc"],
+  "🖥️": ["computer", "desktop", "monitor"],
+  "🖥": ["computer", "desktop", "monitor"],
+  "⌨️": ["computer", "keyboard"],
+  "⌨": ["computer", "keyboard"],
+  "🖱️": ["computer", "mouse"],
+  "🖱": ["computer", "mouse"],
+  "❤️": ["heart", "love"],
+  "❤": ["heart", "love"],
+  "🇮🇳": ["india", "indian", "flag"]
+}

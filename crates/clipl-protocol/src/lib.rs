@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+mod picker;
 mod transport;
 
 use clipl_core::{
@@ -11,6 +12,7 @@ use clipl_core::{
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub use picker::{PickerItem, PickerKind, SkinTonePref};
 pub use transport::{
     cleanup_stale_socket, read_frame, set_socket_mode, write_frame, IpcClient, PROTOCOL_VERSION,
 };
@@ -108,6 +110,92 @@ pub enum Request {
     ListSnippets,
     /// Fetch privacy rules.
     ListPrivacyRules,
+    /// Ranked emoji search. Empty query returns no rows.
+    SearchEmoji {
+        /// Search needle.
+        query: String,
+        /// Maximum items to return.
+        limit: u32,
+    },
+    /// Emoji in a Unicode group, or `Frequently Used`.
+    ListEmojiCategory {
+        /// Group name.
+        category: String,
+        /// Maximum items to return.
+        limit: u32,
+    },
+    /// Usage-ranked emoji.
+    GetFrequentlyUsedEmoji {
+        /// Maximum items to return.
+        limit: u32,
+    },
+    /// Record that an emoji was copied.
+    RecordEmojiUsage {
+        /// Catalog base glyph.
+        glyph: String,
+    },
+    /// Favorite emoji glyphs.
+    GetFavoriteEmoji,
+    /// Mark an emoji as favorite.
+    FavoriteEmoji {
+        /// Catalog base glyph.
+        glyph: String,
+    },
+    /// Remove an emoji favorite.
+    UnfavoriteEmoji {
+        /// Catalog base glyph.
+        glyph: String,
+    },
+    /// Stored default skin tone.
+    GetSkinTonePref,
+    /// Persist default skin tone.
+    SetSkinTonePref {
+        /// Preference name.
+        tone: String,
+    },
+    /// Ranked symbol search.
+    SearchSymbols {
+        /// Search needle.
+        query: String,
+        /// Maximum items to return.
+        limit: u32,
+    },
+    /// Symbols in a curated group.
+    ListSymbolCategory {
+        /// Group name.
+        category: String,
+    },
+    /// Ranked kaomoji search.
+    SearchKaomoji {
+        /// Search needle.
+        query: String,
+        /// Maximum items to return.
+        limit: u32,
+    },
+    /// Kaomoji in a curated group.
+    ListKaomojiCategory {
+        /// Group name.
+        category: String,
+    },
+    /// Favorite symbols or kaomoji.
+    GetFavoritePicker {
+        /// Catalog kind.
+        kind: PickerKind,
+    },
+    /// Mark a symbol or kaomoji as favorite.
+    FavoritePicker {
+        /// Catalog kind.
+        kind: PickerKind,
+        /// Glyph.
+        glyph: String,
+    },
+    /// Remove a symbol or kaomoji favorite.
+    UnfavoritePicker {
+        /// Catalog kind.
+        kind: PickerKind,
+        /// Glyph.
+        glyph: String,
+    },
 }
 
 /// Responses matching [`Request`].
@@ -152,6 +240,24 @@ pub enum Response {
     Snippets(Vec<Snippet>),
     /// Privacy rule list.
     PrivacyRules(Vec<PrivacyRule>),
+    /// Compact picker rows (emoji, symbols, or kaomoji).
+    PickerList(Vec<PickerItem>),
+    /// Favorite mutation result.
+    PickerFavorite {
+        /// Glyph.
+        glyph: String,
+        /// Resulting favorite state.
+        favorite: bool,
+    },
+    /// Usage recorded.
+    PickerUsage {
+        /// Glyph.
+        glyph: String,
+        /// New count.
+        count: u64,
+    },
+    /// Skin-tone preference.
+    SkinTone(SkinTonePref),
     /// Request failed.
     Error {
         /// Error message. Must not contain clipboard secrets.

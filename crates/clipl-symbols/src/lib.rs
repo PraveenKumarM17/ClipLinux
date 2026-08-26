@@ -1,13 +1,18 @@
-//! Unicode symbol catalog (not emoji).
-//!
-//! A small builtin set keeps the picker usable offline. Full symbol packs can
-//! be added under `packages/` later.
+//! Curated symbol and kaomoji catalogs (offline).
 
 #![forbid(unsafe_code)]
 
+use std::sync::OnceLock;
+
 use serde::{Deserialize, Serialize};
 
-/// A pasteable symbol or punctuation sequence.
+const SYMBOLS_JSON: &str = include_str!("../../../packages/symbols-data/symbols.json");
+const KAOMOJI_JSON: &str = include_str!("../../../packages/symbols-data/kaomoji.json");
+
+static SYMBOLS: OnceLock<SymbolCatalog> = OnceLock::new();
+static KAOMOJI: OnceLock<SymbolCatalog> = OnceLock::new();
+
+/// A pasteable symbol, punctuation sequence, or kaomoji.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol {
     /// Glyph or sequence.
@@ -20,17 +25,64 @@ pub struct Symbol {
     pub keywords: Vec<String>,
 }
 
-/// In-memory symbol catalog.
-#[derive(Clone, Debug, Default)]
+#[derive(Deserialize)]
+struct PackedFile {
+    groups: Vec<String>,
+    #[serde(default)]
+    symbols: Vec<PackedItem>,
+    #[serde(default)]
+    kaomoji: Vec<PackedItem>,
+}
+
+#[derive(Deserialize)]
+struct PackedItem {
+    g: String,
+    n: String,
+    c: String,
+    #[serde(default)]
+    k: Vec<String>,
+}
+
+/// In-memory catalog.
+#[derive(Clone, Debug)]
 pub struct SymbolCatalog {
     entries: Vec<Symbol>,
+    groups: Vec<String>,
 }
 
 impl SymbolCatalog {
-    /// Builtin subset used by the foundation.
-    pub fn builtin() -> Self {
+    /// Curated Unicode symbols.
+    pub fn symbols() -> &'static Self {
+        SYMBOLS.get_or_init(|| Self::from_packed(SYMBOLS_JSON))
+    }
+
+    /// Curated kaomoji / text faces.
+    pub fn kaomoji() -> &'static Self {
+        KAOMOJI.get_or_init(|| Self::from_packed(KAOMOJI_JSON))
+    }
+
+    /// Builtin subset used by older tests (`symbols()`).
+    pub fn builtin() -> &'static Self {
+        Self::symbols()
+    }
+
+    fn from_packed(json: &str) -> Self {
+        let file: PackedFile =
+            serde_json::from_str(json).expect("packed symbol catalog must parse");
+        let entries: Vec<Symbol> = file
+            .symbols
+            .into_iter()
+            .chain(file.kaomoji)
+            .map(|item| Symbol {
+                glyph: item.g,
+                name: item.n,
+                group: item.c,
+                keywords: item.k,
+            })
+            .collect();
         Self {
-            entries: builtin_symbols(),
+            entries,
+            groups: file.groups,
         }
     }
 
@@ -44,52 +96,86 @@ impl SymbolCatalog {
         self.entries.is_empty()
     }
 
-    /// Case-insensitive search on name, glyph, and keywords.
-    pub fn search(&self, query: &str) -> Vec<&Symbol> {
+    /// Category names.
+    pub fn groups(&self) -> &[String] {
+        &self.groups
+    }
+
+    /// Ranked case-insensitive search. Empty query returns no rows.
+    pub fn search(&self, query: &str, limit: usize) -> Vec<&Symbol> {
+        let limit = limit.clamp(1, 400);
         let q = query.trim().to_ascii_lowercase();
         if q.is_empty() {
-            return self.entries.iter().collect();
+            return Vec::new();
         }
+        let tokens: Vec<&str> = q.split_whitespace().collect();
+        let mut scored: Vec<(u32, &Symbol)> = self
+            .entries
+            .iter()
+            .filter_map(|symbol| {
+                let score = score_symbol(symbol, query.trim(), &q, &tokens);
+                (score > 0).then_some((score, symbol))
+            })
+            .collect();
+        scored.sort_by(|a, b| {
+            b.0.cmp(&a.0)
+                .then_with(|| a.1.name.cmp(&b.1.name))
+                .then_with(|| a.1.glyph.cmp(&b.1.glyph))
+        });
+        scored.truncate(limit);
+        scored.into_iter().map(|(_, s)| s).collect()
+    }
+
+    /// All items in a group.
+    pub fn list_group(&self, group: &str) -> Vec<&Symbol> {
         self.entries
             .iter()
-            .filter(|symbol| {
-                symbol.glyph == query
-                    || symbol.name.to_ascii_lowercase().contains(&q)
-                    || symbol
-                        .keywords
-                        .iter()
-                        .any(|kw| kw.to_ascii_lowercase().contains(&q))
-            })
+            .filter(|symbol| symbol.group.eq_ignore_ascii_case(group))
             .collect()
     }
-}
 
-fn builtin_symbols() -> Vec<Symbol> {
-    vec![
-        sym("—", "Em dash", "punctuation", &["dash", "em"]),
-        sym("–", "En dash", "punctuation", &["dash", "en"]),
-        sym("…", "Ellipsis", "punctuation", &["dots"]),
-        sym("©", "Copyright", "legal", &["copy"]),
-        sym("®", "Registered", "legal", &["reg"]),
-        sym("™", "Trademark", "legal", &["tm"]),
-        sym("→", "Right arrow", "arrows", &["arrow"]),
-        sym("←", "Left arrow", "arrows", &["arrow"]),
-        sym("≠", "Not equal", "math", &["neq", "math"]),
-        sym("≤", "Less than or equal", "math", &["lte"]),
-        sym("≥", "Greater than or equal", "math", &["gte"]),
-        sym("€", "Euro", "currency", &["euro"]),
-        sym("£", "Pound", "currency", &["gbp"]),
-        sym("¥", "Yen", "currency", &["jpy"]),
-    ]
-}
-
-fn sym(glyph: &str, name: &str, group: &str, keywords: &[&str]) -> Symbol {
-    Symbol {
-        glyph: glyph.to_string(),
-        name: name.to_string(),
-        group: group.to_string(),
-        keywords: keywords.iter().map(|s| (*s).to_string()).collect(),
+    /// Lookup by glyph.
+    pub fn by_glyph(&self, glyph: &str) -> Option<&Symbol> {
+        self.entries.iter().find(|symbol| symbol.glyph == glyph)
     }
+}
+
+fn score_symbol(symbol: &Symbol, raw: &str, lowered: &str, tokens: &[&str]) -> u32 {
+    if symbol.glyph == raw {
+        return 10_000;
+    }
+    let name = symbol.name.to_ascii_lowercase();
+    if name == lowered {
+        return 9_000;
+    }
+    if symbol
+        .keywords
+        .iter()
+        .any(|kw| kw.eq_ignore_ascii_case(lowered))
+    {
+        return 8_500;
+    }
+    if tokens.iter().all(|tok| name.contains(tok)) {
+        return 5_500;
+    }
+    let mut matched = 0u32;
+    for tok in tokens {
+        if name.contains(tok)
+            || symbol
+                .keywords
+                .iter()
+                .any(|kw| kw == tok || kw.contains(tok))
+        {
+            matched += 1;
+        }
+    }
+    if matched == tokens.len() as u32 && matched > 0 {
+        return 4_000;
+    }
+    if matched > 0 {
+        return 1_000 + matched * 50;
+    }
+    0
 }
 
 #[cfg(test)]
@@ -99,7 +185,31 @@ mod tests {
     #[test]
     fn finds_em_dash() {
         let catalog = SymbolCatalog::builtin();
-        let hits = catalog.search("em dash");
+        let hits = catalog.search("em dash", 5);
         assert_eq!(hits[0].glyph, "—");
+    }
+
+    #[test]
+    fn math_category_and_search() {
+        let catalog = SymbolCatalog::symbols();
+        assert!(catalog.list_group("Math").iter().any(|s| s.glyph == "≠"));
+        assert_eq!(catalog.search("euro", 3)[0].glyph, "€");
+        assert!(catalog.search("", 10).is_empty());
+    }
+
+    #[test]
+    fn kaomoji_preserves_unicode_and_categories() {
+        let catalog = SymbolCatalog::kaomoji();
+        assert!(catalog.groups().contains(&"Table Flip".to_string()));
+        let flip = catalog.search("table flip", 5);
+        assert!(flip[0].glyph.contains("┻"));
+        let shrug = catalog.search("shrug", 5);
+        assert!(shrug.iter().any(|s| s.glyph.contains("ツ")));
+        let lenny = catalog.search("lenny", 3);
+        assert_eq!(lenny[0].glyph, "( ͡° ͜ʖ ͡°)");
+        assert!(catalog
+            .list_group("Cute")
+            .iter()
+            .any(|s| s.glyph.contains("ʕ")));
     }
 }

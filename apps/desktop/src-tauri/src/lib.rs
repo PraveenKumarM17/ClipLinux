@@ -10,6 +10,7 @@ mod clipboard;
 mod commands;
 mod dto;
 mod ipc;
+mod picker;
 
 use clipl_core::PlatformCapabilities;
 use clipl_protocol::{Envelope, Message, Request, Response};
@@ -20,6 +21,10 @@ pub use commands::{
 };
 pub use dto::{ConnectionView, HistoryRow};
 pub use ipc::{DaemonClient, START_COMMAND};
+pub use picker::{
+    copy_picker_item, list_emoji_category, list_picker_category, picker_favorites, search_emoji,
+    search_picker, set_picker_favorite, set_skin_tone_pref, skin_tone_pref,
+};
 
 /// Application identifier used by Tauri and desktop files.
 pub const APP_ID: &str = "io.clipl.ClipLinux";
@@ -103,6 +108,15 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
             cmd_unpin_history_item,
             cmd_copy_history_item,
             cmd_close_window,
+            cmd_search_emoji,
+            cmd_list_emoji_category,
+            cmd_search_picker,
+            cmd_list_picker_category,
+            cmd_picker_favorites,
+            cmd_set_picker_favorite,
+            cmd_skin_tone_pref,
+            cmd_set_skin_tone_pref,
+            cmd_copy_picker_item,
         ])
         .run(tauri::generate_context!())?;
     Ok(())
@@ -161,6 +175,82 @@ fn cmd_copy_history_item(id: String) -> Result<(), String> {
 #[tauri::command]
 fn cmd_close_window(window: tauri::Window) -> Result<(), String> {
     window.close().map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+use clipl_protocol::{PickerItem, PickerKind};
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_search_emoji(query: String, limit: u32) -> Result<Vec<PickerItem>, String> {
+    picker::search_emoji(&DaemonClient::from_env(), &query, limit).map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_list_emoji_category(category: String, limit: u32) -> Result<Vec<PickerItem>, String> {
+    picker::list_emoji_category(&DaemonClient::from_env(), &category, limit)
+        .map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_search_picker(
+    kind: PickerKind,
+    query: String,
+    limit: u32,
+) -> Result<Vec<PickerItem>, String> {
+    picker::search_picker(&DaemonClient::from_env(), kind, &query, limit)
+        .map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_list_picker_category(kind: PickerKind, category: String) -> Result<Vec<PickerItem>, String> {
+    picker::list_picker_category(&DaemonClient::from_env(), kind, &category)
+        .map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_picker_favorites(kind: PickerKind) -> Result<Vec<PickerItem>, String> {
+    picker::picker_favorites(&DaemonClient::from_env(), kind).map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_set_picker_favorite(
+    kind: PickerKind,
+    glyph: String,
+    favorite: bool,
+) -> Result<bool, String> {
+    picker::set_picker_favorite(&DaemonClient::from_env(), kind, &glyph, favorite)
+        .map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_skin_tone_pref() -> Result<String, String> {
+    picker::skin_tone_pref(&DaemonClient::from_env()).map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_set_skin_tone_pref(tone: String) -> Result<String, String> {
+    picker::set_skin_tone_pref(&DaemonClient::from_env(), &tone).map_err(|err| err.to_string())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_copy_picker_item(kind: PickerKind, glyph: String, base: String) -> Result<(), String> {
+    picker::copy_picker_item(
+        &DaemonClient::from_env(),
+        &clipboard::SystemClipboard,
+        kind,
+        &glyph,
+        &base,
+    )
+    .map_err(|err| err.to_string())
 }
 
 #[cfg(test)]

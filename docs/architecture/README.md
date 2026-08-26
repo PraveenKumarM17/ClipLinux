@@ -24,6 +24,8 @@ See also:
 - [storage.md](storage.md)
 - [desktop.md](desktop.md)
 - [desktop-daemon-boundary.md](desktop-daemon-boundary.md)
+- [emoji-engine.md](emoji-engine.md)
+- [symbols-engine.md](symbols-engine.md)
 
 ## Why core has in-memory placeholders
 

@@ -43,8 +43,32 @@ CREATE INDEX IF NOT EXISTS idx_clipboard_text
     ON clipboard_items (text_content);
 "#;
 
+const MIGRATION_V2: &str = r#"
+CREATE TABLE IF NOT EXISTS picker_usage (
+    kind TEXT NOT NULL,
+    glyph TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    last_used_at INTEGER NOT NULL,
+    PRIMARY KEY (kind, glyph)
+);
+CREATE INDEX IF NOT EXISTS idx_picker_usage_rank
+    ON picker_usage (kind, count DESC, last_used_at DESC);
+
+CREATE TABLE IF NOT EXISTS picker_favorites (
+    kind TEXT NOT NULL,
+    glyph TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (kind, glyph)
+);
+
+CREATE TABLE IF NOT EXISTS picker_prefs (
+    key TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL
+);
+"#;
+
 /// Schema version written by the latest migration.
-pub const SCHEMA_VERSION: i64 = 1;
+pub const SCHEMA_VERSION: i64 = 2;
 
 /// SQLite-backed store. Safe for a local desktop daemon (WAL, busy timeout).
 pub struct SqliteStore {
@@ -97,7 +121,7 @@ impl SqliteStore {
         .map_err(|err| Error::Storage(err.to_string()))
     }
 
-    fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
+    pub(crate) fn lock(&self) -> Result<std::sync::MutexGuard<'_, Connection>> {
         self.conn
             .lock()
             .map_err(|_| Error::Storage("sqlite lock poisoned".into()))
@@ -139,6 +163,22 @@ fn migrate(conn: &Connection) -> Result<()> {
             .map_err(|err| Error::Storage(err.to_string()))?;
         conn.execute(
             "INSERT INTO schema_migrations (version, applied_at) VALUES (1, ?1)",
+            params![Timestamp::now().as_millis()],
+        )
+        .map_err(|err| Error::Storage(err.to_string()))?;
+    }
+    let current: i64 = conn
+        .query_row(
+            "SELECT COALESCE(MAX(version), 0) FROM schema_migrations",
+            [],
+            |row| row.get(0),
+        )
+        .map_err(|err| Error::Storage(err.to_string()))?;
+    if current < 2 {
+        conn.execute_batch(MIGRATION_V2)
+            .map_err(|err| Error::Storage(err.to_string()))?;
+        conn.execute(
+            "INSERT INTO schema_migrations (version, applied_at) VALUES (2, ?1)",
             params![Timestamp::now().as_millis()],
         )
         .map_err(|err| Error::Storage(err.to_string()))?;
@@ -496,7 +536,7 @@ mod tests {
     use clipl_core::{ClipboardItem, Timestamp};
 
     #[test]
-    fn migrates_to_v1() {
+    fn migrates_to_current() {
         let store = SqliteStore::memory().unwrap();
         assert_eq!(store.schema_version().unwrap(), SCHEMA_VERSION);
     }

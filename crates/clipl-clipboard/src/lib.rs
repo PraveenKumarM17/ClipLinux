@@ -8,6 +8,7 @@
 mod engine;
 mod hash;
 mod memory;
+mod picker;
 mod sqlite;
 mod store;
 
@@ -18,6 +19,7 @@ use clipl_core::{
 pub use engine::{for_client, HistoryEngine, RecordOutcome, Recorded};
 pub use hash::content_hash;
 pub use memory::MemoryHistoryStore;
+pub use picker::{PickerKind as StorePickerKind, UsageRow, MAX_USAGE_ROWS};
 pub use sqlite::{SqliteStore, SCHEMA_VERSION};
 pub use store::{HistoryQuery, HistoryStore};
 

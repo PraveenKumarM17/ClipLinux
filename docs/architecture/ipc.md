@@ -26,6 +26,13 @@ Protocol version: `clipl_protocol::PROTOCOL_VERSION` (currently `1`).
 | `ClearHistory` | `Cleared { count }` (unpinned only) |
 | `PinItem { item_id }` / `UnpinItem { item_id }` | `Pinned { item_id, pinned }` |
 | `CopyItem { item_id }` | `Copied { item_id, text }` then the client writes the OS clipboard |
+| `SearchEmoji` / `ListEmojiCategory` / `GetFrequentlyUsedEmoji` | `PickerList` |
+| `RecordEmojiUsage` | `PickerUsage` |
+| `FavoriteEmoji` / `UnfavoriteEmoji` / `GetFavoriteEmoji` | `PickerFavorite` / `PickerList` |
+| `GetSkinTonePref` / `SetSkinTonePref` | `SkinTone` |
+| `SearchSymbols` / `ListSymbolCategory` | `PickerList` |
+| `SearchKaomoji` / `ListKaomojiCategory` | `PickerList` |
+| `FavoritePicker` / `UnfavoritePicker` / `GetFavoritePicker` | `PickerFavorite` / `PickerList` |
 
 History replies are sanitized with `for_client`: hidden items keep their
 metadata but not the secret payload.

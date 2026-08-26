@@ -5,12 +5,13 @@ edition.workspace = true
 license.workspace = true
 rust-version.workspace = true
 authors.workspace = true
-description = "Unicode symbol catalog for ClipLinux"
+description = "Unicode symbol and kaomoji catalogs for ClipLinux"
 publish.workspace = true
 
 [dependencies]
 clipl-core.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 
 [lints]
 workspace = true

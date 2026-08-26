@@ -124,4 +124,6 @@ Never commit clipboard dumps.
 ## Tasks
 
 `tasks/000-foundation.md` and `tasks/001-clipboard-monitoring.md` are done.
-Phase 3A is the production desktop shell.
+Phase 3A is the production desktop shell. Phase 3B is the offline emoji and
+symbols engine (`python3 packages/emoji-data/scripts/generate.py` regenerates
+the compact catalog).

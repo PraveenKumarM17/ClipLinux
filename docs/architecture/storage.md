@@ -25,7 +25,7 @@ Access is serialized with a mutex. The watch thread does not poll the database.
 
 ## Schema version
 
-`schema_migrations.version` — current: **1**.
+`schema_migrations.version` — current: **2**.
 
 ```sql
 CREATE TABLE schema_migrations (
@@ -55,6 +55,25 @@ CREATE TABLE clipboard_items (
     last_used_at INTEGER,
     expires_at INTEGER,
     pinned INTEGER NOT NULL DEFAULT 0
+);
+
+-- v2 picker (emoji usage/favorites, symbol/kaomoji favorites, skin tone)
+CREATE TABLE picker_usage (
+    kind TEXT NOT NULL,
+    glyph TEXT NOT NULL,
+    count INTEGER NOT NULL,
+    last_used_at INTEGER NOT NULL,
+    PRIMARY KEY (kind, glyph)
+);
+CREATE TABLE picker_favorites (
+    kind TEXT NOT NULL,
+    glyph TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    PRIMARY KEY (kind, glyph)
+);
+CREATE TABLE picker_prefs (
+    key TEXT PRIMARY KEY NOT NULL,
+    value TEXT NOT NULL
 );
 ```
 

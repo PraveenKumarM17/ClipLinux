@@ -23,11 +23,11 @@ fn workspace_crates_compose() {
     let item = ClipboardItem::text("workspace smoke");
     assert_eq!(history.record(&item).unwrap(), RecordOutcome::Stored);
 
-    let catalog = EmojiCatalog::builtin();
-    assert!(!catalog.search("penguin").is_empty());
+    let catalog = EmojiCatalog::load_packed();
+    assert!(!catalog.search("penguin", 8).is_empty());
 
     let symbols = SymbolCatalog::builtin();
-    assert!(!symbols.search("euro").is_empty());
+    assert!(!symbols.search("euro", 8).is_empty());
 
     let snippets = SnippetLibrary::default();
     snippets

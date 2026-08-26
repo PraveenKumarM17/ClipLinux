@@ -63,6 +63,9 @@ async function loadHistory(): Promise<void> {
   if (session.connection.kind !== "connected") {
     return;
   }
+  if (session.tab !== "history") {
+    return;
+  }
   session.loadingHistory = true;
   try {
     const rows = session.query.trim()

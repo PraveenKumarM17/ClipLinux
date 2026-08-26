@@ -2,6 +2,8 @@
 
 #![forbid(unsafe_code)]
 
+mod picker;
+
 use std::fs;
 use std::os::unix::net::UnixListener;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -163,9 +165,9 @@ impl DaemonState {
             Request::Paste { .. } => Response::Error {
                 message: "paste is not implemented".into(),
             },
-            _ => Response::Error {
+            other => self.handle_picker(other).unwrap_or(Response::Error {
                 message: "unknown request".into(),
-            },
+            }),
         }
     }
 

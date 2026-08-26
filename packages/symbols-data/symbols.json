@@ -1,0 +1,1997 @@
+{
+  "version": 1,
+  "description": "Curated offline Unicode symbols for ClipLinux. Not the full UCS.",
+  "groups": [
+    "General",
+    "Arrows",
+    "Math",
+    "Currency",
+    "Technical",
+    "Greek",
+    "Latin Extended",
+    "Punctuation",
+    "Shapes",
+    "Stars",
+    "Weather",
+    "Units"
+  ],
+  "symbols": [
+    {
+      "g": "©",
+      "n": "Copyright",
+      "c": "General",
+      "k": [
+        "copy",
+        "legal"
+      ]
+    },
+    {
+      "g": "®",
+      "n": "Registered",
+      "c": "General",
+      "k": [
+        "reg",
+        "legal"
+      ]
+    },
+    {
+      "g": "™",
+      "n": "Trademark",
+      "c": "General",
+      "k": [
+        "tm",
+        "legal"
+      ]
+    },
+    {
+      "g": "°",
+      "n": "Degree",
+      "c": "General",
+      "k": [
+        "temp",
+        "angle"
+      ]
+    },
+    {
+      "g": "†",
+      "n": "Dagger",
+      "c": "General",
+      "k": [
+        "obelisk"
+      ]
+    },
+    {
+      "g": "‡",
+      "n": "Double dagger",
+      "c": "General",
+      "k": []
+    },
+    {
+      "g": "§",
+      "n": "Section",
+      "c": "General",
+      "k": [
+        "legal",
+        "silcrow"
+      ]
+    },
+    {
+      "g": "¶",
+      "n": "Pilcrow",
+      "c": "General",
+      "k": [
+        "paragraph"
+      ]
+    },
+    {
+      "g": "•",
+      "n": "Bullet",
+      "c": "General",
+      "k": [
+        "dot",
+        "list"
+      ]
+    },
+    {
+      "g": "‣",
+      "n": "Triangular bullet",
+      "c": "General",
+      "k": [
+        "list"
+      ]
+    },
+    {
+      "g": "·",
+      "n": "Middle dot",
+      "c": "General",
+      "k": [
+        "interpunct"
+      ]
+    },
+    {
+      "g": "※",
+      "n": "Reference mark",
+      "c": "General",
+      "k": [
+        "kome"
+      ]
+    },
+    {
+      "g": "⁂",
+      "n": "Asterism",
+      "c": "General",
+      "k": [
+        "break"
+      ]
+    },
+    {
+      "g": "∞",
+      "n": "Infinity",
+      "c": "General",
+      "k": [
+        "inf"
+      ]
+    },
+    {
+      "g": "✓",
+      "n": "Check mark",
+      "c": "General",
+      "k": [
+        "tick",
+        "yes",
+        "ok"
+      ]
+    },
+    {
+      "g": "✔",
+      "n": "Heavy check mark",
+      "c": "General",
+      "k": [
+        "tick",
+        "yes"
+      ]
+    },
+    {
+      "g": "✕",
+      "n": "Multiplication x",
+      "c": "General",
+      "k": [
+        "close",
+        "x"
+      ]
+    },
+    {
+      "g": "✖",
+      "n": "Heavy multiplication x",
+      "c": "General",
+      "k": [
+        "close"
+      ]
+    },
+    {
+      "g": "✗",
+      "n": "Ballot x",
+      "c": "General",
+      "k": [
+        "cross",
+        "no"
+      ]
+    },
+    {
+      "g": "☐",
+      "n": "Ballot box",
+      "c": "General",
+      "k": [
+        "checkbox"
+      ]
+    },
+    {
+      "g": "☑",
+      "n": "Ballot box with check",
+      "c": "General",
+      "k": [
+        "checkbox",
+        "done"
+      ]
+    },
+    {
+      "g": "☒",
+      "n": "Ballot box with x",
+      "c": "General",
+      "k": [
+        "checkbox"
+      ]
+    },
+    {
+      "g": "★",
+      "n": "Black star",
+      "c": "Stars",
+      "k": [
+        "star",
+        "favorite"
+      ]
+    },
+    {
+      "g": "☆",
+      "n": "White star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✦",
+      "n": "Black four pointed star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✧",
+      "n": "White four pointed star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✩",
+      "n": "Stress outlined white star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✪",
+      "n": "Circled white star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✫",
+      "n": "Open centre black star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✬",
+      "n": "Black centre white star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✭",
+      "n": "Outlined black star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✮",
+      "n": "Heavy outlined black star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✯",
+      "n": "Pinwheel star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "✰",
+      "n": "Shadowed white star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "⋆",
+      "n": "Star operator",
+      "c": "Stars",
+      "k": [
+        "star",
+        "math"
+      ]
+    },
+    {
+      "g": "⭐",
+      "n": "White medium star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "🌟",
+      "n": "Glowing star",
+      "c": "Stars",
+      "k": [
+        "star"
+      ]
+    },
+    {
+      "g": "→",
+      "n": "Right arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow",
+        "to"
+      ]
+    },
+    {
+      "g": "←",
+      "n": "Left arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow",
+        "from"
+      ]
+    },
+    {
+      "g": "↑",
+      "n": "Up arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↓",
+      "n": "Down arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↔",
+      "n": "Left right arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow",
+        "swap"
+      ]
+    },
+    {
+      "g": "↕",
+      "n": "Up down arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↖",
+      "n": "North west arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↗",
+      "n": "North east arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↘",
+      "n": "South east arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↙",
+      "n": "South west arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "⇒",
+      "n": "Right double arrow",
+      "c": "Arrows",
+      "k": [
+        "implies",
+        "math"
+      ]
+    },
+    {
+      "g": "⇐",
+      "n": "Left double arrow",
+      "c": "Arrows",
+      "k": [
+        "math"
+      ]
+    },
+    {
+      "g": "⇔",
+      "n": "Left right double arrow",
+      "c": "Arrows",
+      "k": [
+        "iff",
+        "math"
+      ]
+    },
+    {
+      "g": "⟶",
+      "n": "Long right arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "⟵",
+      "n": "Long left arrow",
+      "c": "Arrows",
+      "k": [
+        "arrow"
+      ]
+    },
+    {
+      "g": "↦",
+      "n": "Maps to",
+      "c": "Arrows",
+      "k": [
+        "maps",
+        "math"
+      ]
+    },
+    {
+      "g": "↳",
+      "n": "Down right arrow",
+      "c": "Arrows",
+      "k": [
+        "return",
+        "enter"
+      ]
+    },
+    {
+      "g": "↵",
+      "n": "Down left arrow",
+      "c": "Arrows",
+      "k": [
+        "return"
+      ]
+    },
+    {
+      "g": "↻",
+      "n": "Clockwise open circle arrow",
+      "c": "Arrows",
+      "k": [
+        "reload",
+        "redo"
+      ]
+    },
+    {
+      "g": "↺",
+      "n": "Anticlockwise open circle arrow",
+      "c": "Arrows",
+      "k": [
+        "undo"
+      ]
+    },
+    {
+      "g": "⇄",
+      "n": "Right arrow over left arrow",
+      "c": "Arrows",
+      "k": [
+        "swap"
+      ]
+    },
+    {
+      "g": "≠",
+      "n": "Not equal",
+      "c": "Math",
+      "k": [
+        "neq",
+        "inequality"
+      ]
+    },
+    {
+      "g": "≈",
+      "n": "Almost equal",
+      "c": "Math",
+      "k": [
+        "approx"
+      ]
+    },
+    {
+      "g": "≡",
+      "n": "Identical to",
+      "c": "Math",
+      "k": [
+        "equiv"
+      ]
+    },
+    {
+      "g": "≤",
+      "n": "Less than or equal",
+      "c": "Math",
+      "k": [
+        "lte",
+        "leq"
+      ]
+    },
+    {
+      "g": "≥",
+      "n": "Greater than or equal",
+      "c": "Math",
+      "k": [
+        "gte",
+        "geq"
+      ]
+    },
+    {
+      "g": "±",
+      "n": "Plus minus",
+      "c": "Math",
+      "k": [
+        "plusmn"
+      ]
+    },
+    {
+      "g": "∓",
+      "n": "Minus plus",
+      "c": "Math",
+      "k": []
+    },
+    {
+      "g": "×",
+      "n": "Multiplication sign",
+      "c": "Math",
+      "k": [
+        "times",
+        "mul"
+      ]
+    },
+    {
+      "g": "÷",
+      "n": "Division sign",
+      "c": "Math",
+      "k": [
+        "div"
+      ]
+    },
+    {
+      "g": "⋅",
+      "n": "Dot operator",
+      "c": "Math",
+      "k": [
+        "dot"
+      ]
+    },
+    {
+      "g": "∝",
+      "n": "Proportional to",
+      "c": "Math",
+      "k": [
+        "prop"
+      ]
+    },
+    {
+      "g": "√",
+      "n": "Square root",
+      "c": "Math",
+      "k": [
+        "sqrt",
+        "root"
+      ]
+    },
+    {
+      "g": "∑",
+      "n": "N-ary summation",
+      "c": "Math",
+      "k": [
+        "sum",
+        "sigma"
+      ]
+    },
+    {
+      "g": "∏",
+      "n": "N-ary product",
+      "c": "Math",
+      "k": [
+        "product"
+      ]
+    },
+    {
+      "g": "∫",
+      "n": "Integral",
+      "c": "Math",
+      "k": [
+        "int",
+        "calculus"
+      ]
+    },
+    {
+      "g": "∂",
+      "n": "Partial differential",
+      "c": "Math",
+      "k": [
+        "partial",
+        "del"
+      ]
+    },
+    {
+      "g": "∇",
+      "n": "Nabla",
+      "c": "Math",
+      "k": [
+        "grad",
+        "del"
+      ]
+    },
+    {
+      "g": "∈",
+      "n": "Element of",
+      "c": "Math",
+      "k": [
+        "in",
+        "set"
+      ]
+    },
+    {
+      "g": "∉",
+      "n": "Not an element of",
+      "c": "Math",
+      "k": [
+        "notin",
+        "set"
+      ]
+    },
+    {
+      "g": "∋",
+      "n": "Contains as member",
+      "c": "Math",
+      "k": [
+        "ni",
+        "set"
+      ]
+    },
+    {
+      "g": "⊂",
+      "n": "Subset of",
+      "c": "Math",
+      "k": [
+        "subset"
+      ]
+    },
+    {
+      "g": "⊃",
+      "n": "Superset of",
+      "c": "Math",
+      "k": [
+        "superset"
+      ]
+    },
+    {
+      "g": "⊆",
+      "n": "Subset of or equal to",
+      "c": "Math",
+      "k": [
+        "subseteq"
+      ]
+    },
+    {
+      "g": "∪",
+      "n": "Union",
+      "c": "Math",
+      "k": [
+        "cup",
+        "set"
+      ]
+    },
+    {
+      "g": "∩",
+      "n": "Intersection",
+      "c": "Math",
+      "k": [
+        "cap",
+        "set"
+      ]
+    },
+    {
+      "g": "∅",
+      "n": "Empty set",
+      "c": "Math",
+      "k": [
+        "null",
+        "set"
+      ]
+    },
+    {
+      "g": "∧",
+      "n": "Logical and",
+      "c": "Math",
+      "k": [
+        "and",
+        "wedge"
+      ]
+    },
+    {
+      "g": "∨",
+      "n": "Logical or",
+      "c": "Math",
+      "k": [
+        "or",
+        "vee"
+      ]
+    },
+    {
+      "g": "¬",
+      "n": "Not sign",
+      "c": "Math",
+      "k": [
+        "not",
+        "negation"
+      ]
+    },
+    {
+      "g": "∀",
+      "n": "For all",
+      "c": "Math",
+      "k": [
+        "forall",
+        "universal"
+      ]
+    },
+    {
+      "g": "∃",
+      "n": "There exists",
+      "c": "Math",
+      "k": [
+        "exists"
+      ]
+    },
+    {
+      "g": "∴",
+      "n": "Therefore",
+      "c": "Math",
+      "k": [
+        "thus"
+      ]
+    },
+    {
+      "g": "∵",
+      "n": "Because",
+      "c": "Math",
+      "k": [
+        "since"
+      ]
+    },
+    {
+      "g": "π",
+      "n": "Pi",
+      "c": "Math",
+      "k": [
+        "pi",
+        "greek"
+      ]
+    },
+    {
+      "g": "€",
+      "n": "Euro",
+      "c": "Currency",
+      "k": [
+        "eur",
+        "euro"
+      ]
+    },
+    {
+      "g": "£",
+      "n": "Pound sterling",
+      "c": "Currency",
+      "k": [
+        "gbp",
+        "pound"
+      ]
+    },
+    {
+      "g": "¥",
+      "n": "Yen",
+      "c": "Currency",
+      "k": [
+        "jpy",
+        "cny",
+        "yuan"
+      ]
+    },
+    {
+      "g": "₹",
+      "n": "Indian rupee",
+      "c": "Currency",
+      "k": [
+        "inr",
+        "rupee",
+        "india"
+      ]
+    },
+    {
+      "g": "₽",
+      "n": "Ruble",
+      "c": "Currency",
+      "k": [
+        "rub"
+      ]
+    },
+    {
+      "g": "₩",
+      "n": "Won",
+      "c": "Currency",
+      "k": [
+        "krw"
+      ]
+    },
+    {
+      "g": "¢",
+      "n": "Cent",
+      "c": "Currency",
+      "k": [
+        "cent"
+      ]
+    },
+    {
+      "g": "$",
+      "n": "Dollar",
+      "c": "Currency",
+      "k": [
+        "usd"
+      ]
+    },
+    {
+      "g": "₿",
+      "n": "Bitcoin",
+      "c": "Currency",
+      "k": [
+        "btc",
+        "crypto"
+      ]
+    },
+    {
+      "g": "₫",
+      "n": "Dong",
+      "c": "Currency",
+      "k": [
+        "vnd"
+      ]
+    },
+    {
+      "g": "₱",
+      "n": "Peso",
+      "c": "Currency",
+      "k": [
+        "php"
+      ]
+    },
+    {
+      "g": "₪",
+      "n": "Shekel",
+      "c": "Currency",
+      "k": [
+        "ils"
+      ]
+    },
+    {
+      "g": "₦",
+      "n": "Naira",
+      "c": "Currency",
+      "k": [
+        "ngn"
+      ]
+    },
+    {
+      "g": "₨",
+      "n": "Rupee",
+      "c": "Currency",
+      "k": [
+        "rupee"
+      ]
+    },
+    {
+      "g": "ƒ",
+      "n": "Florin",
+      "c": "Currency",
+      "k": [
+        "guilder"
+      ]
+    },
+    {
+      "g": "¤",
+      "n": "Currency sign",
+      "c": "Currency",
+      "k": [
+        "generic"
+      ]
+    },
+    {
+      "g": "⌘",
+      "n": "Place of interest sign",
+      "c": "Technical",
+      "k": [
+        "cmd",
+        "command",
+        "looped square"
+      ]
+    },
+    {
+      "g": "⌥",
+      "n": "Option key",
+      "c": "Technical",
+      "k": [
+        "alt",
+        "option"
+      ]
+    },
+    {
+      "g": "⇧",
+      "n": "Upwards white arrow",
+      "c": "Technical",
+      "k": [
+        "shift"
+      ]
+    },
+    {
+      "g": "⌃",
+      "n": "Up arrowhead",
+      "c": "Technical",
+      "k": [
+        "ctrl",
+        "control"
+      ]
+    },
+    {
+      "g": "⎋",
+      "n": "Broken circle with northwest arrow",
+      "c": "Technical",
+      "k": [
+        "esc",
+        "escape"
+      ]
+    },
+    {
+      "g": "⇥",
+      "n": "Rightwards arrow to bar",
+      "c": "Technical",
+      "k": [
+        "tab"
+      ]
+    },
+    {
+      "g": "⌫",
+      "n": "Erase to the left",
+      "c": "Technical",
+      "k": [
+        "backspace",
+        "delete"
+      ]
+    },
+    {
+      "g": "⌦",
+      "n": "Erase to the right",
+      "c": "Technical",
+      "k": [
+        "delete"
+      ]
+    },
+    {
+      "g": "⏎",
+      "n": "Return symbol",
+      "c": "Technical",
+      "k": [
+        "enter",
+        "return"
+      ]
+    },
+    {
+      "g": "⏻",
+      "n": "Power symbol",
+      "c": "Technical",
+      "k": [
+        "power"
+      ]
+    },
+    {
+      "g": "⏼",
+      "n": "Power on-off symbol",
+      "c": "Technical",
+      "k": [
+        "power"
+      ]
+    },
+    {
+      "g": "⭘",
+      "n": "Heavy large circle",
+      "c": "Technical",
+      "k": [
+        "power"
+      ]
+    },
+    {
+      "g": "⏽",
+      "n": "Power on symbol",
+      "c": "Technical",
+      "k": [
+        "power"
+      ]
+    },
+    {
+      "g": "¦",
+      "n": "Broken bar",
+      "c": "Technical",
+      "k": [
+        "pipe",
+        "broken"
+      ]
+    },
+    {
+      "g": "⌀",
+      "n": "Diameter sign",
+      "c": "Technical",
+      "k": [
+        "diameter"
+      ]
+    },
+    {
+      "g": "⌂",
+      "n": "House",
+      "c": "Technical",
+      "k": [
+        "home"
+      ]
+    },
+    {
+      "g": "␣",
+      "n": "Open box",
+      "c": "Technical",
+      "k": [
+        "space",
+        "blank"
+      ]
+    },
+    {
+      "g": "λ",
+      "n": "Lambda",
+      "c": "Greek",
+      "k": [
+        "lambda",
+        "fn"
+      ]
+    },
+    {
+      "g": "α",
+      "n": "Alpha",
+      "c": "Greek",
+      "k": [
+        "alpha"
+      ]
+    },
+    {
+      "g": "β",
+      "n": "Beta",
+      "c": "Greek",
+      "k": [
+        "beta"
+      ]
+    },
+    {
+      "g": "γ",
+      "n": "Gamma",
+      "c": "Greek",
+      "k": [
+        "gamma"
+      ]
+    },
+    {
+      "g": "δ",
+      "n": "Delta",
+      "c": "Greek",
+      "k": [
+        "delta"
+      ]
+    },
+    {
+      "g": "ε",
+      "n": "Epsilon",
+      "c": "Greek",
+      "k": [
+        "epsilon"
+      ]
+    },
+    {
+      "g": "ζ",
+      "n": "Zeta",
+      "c": "Greek",
+      "k": [
+        "zeta"
+      ]
+    },
+    {
+      "g": "η",
+      "n": "Eta",
+      "c": "Greek",
+      "k": [
+        "eta"
+      ]
+    },
+    {
+      "g": "θ",
+      "n": "Theta",
+      "c": "Greek",
+      "k": [
+        "theta"
+      ]
+    },
+    {
+      "g": "ι",
+      "n": "Iota",
+      "c": "Greek",
+      "k": [
+        "iota"
+      ]
+    },
+    {
+      "g": "κ",
+      "n": "Kappa",
+      "c": "Greek",
+      "k": [
+        "kappa"
+      ]
+    },
+    {
+      "g": "μ",
+      "n": "Mu",
+      "c": "Greek",
+      "k": [
+        "mu",
+        "micro"
+      ]
+    },
+    {
+      "g": "ν",
+      "n": "Nu",
+      "c": "Greek",
+      "k": [
+        "nu"
+      ]
+    },
+    {
+      "g": "ξ",
+      "n": "Xi",
+      "c": "Greek",
+      "k": [
+        "xi"
+      ]
+    },
+    {
+      "g": "ο",
+      "n": "Omicron",
+      "c": "Greek",
+      "k": [
+        "omicron"
+      ]
+    },
+    {
+      "g": "ρ",
+      "n": "Rho",
+      "c": "Greek",
+      "k": [
+        "rho"
+      ]
+    },
+    {
+      "g": "σ",
+      "n": "Sigma",
+      "c": "Greek",
+      "k": [
+        "sigma"
+      ]
+    },
+    {
+      "g": "τ",
+      "n": "Tau",
+      "c": "Greek",
+      "k": [
+        "tau"
+      ]
+    },
+    {
+      "g": "υ",
+      "n": "Upsilon",
+      "c": "Greek",
+      "k": [
+        "upsilon"
+      ]
+    },
+    {
+      "g": "φ",
+      "n": "Phi",
+      "c": "Greek",
+      "k": [
+        "phi"
+      ]
+    },
+    {
+      "g": "χ",
+      "n": "Chi",
+      "c": "Greek",
+      "k": [
+        "chi"
+      ]
+    },
+    {
+      "g": "ψ",
+      "n": "Psi",
+      "c": "Greek",
+      "k": [
+        "psi"
+      ]
+    },
+    {
+      "g": "ω",
+      "n": "Omega",
+      "c": "Greek",
+      "k": [
+        "omega"
+      ]
+    },
+    {
+      "g": "Ω",
+      "n": "Capital omega",
+      "c": "Greek",
+      "k": [
+        "ohm",
+        "omega"
+      ]
+    },
+    {
+      "g": "Σ",
+      "n": "Capital sigma",
+      "c": "Greek",
+      "k": [
+        "sum"
+      ]
+    },
+    {
+      "g": "Δ",
+      "n": "Capital delta",
+      "c": "Greek",
+      "k": [
+        "delta",
+        "change"
+      ]
+    },
+    {
+      "g": "Π",
+      "n": "Capital pi",
+      "c": "Greek",
+      "k": [
+        "pi"
+      ]
+    },
+    {
+      "g": "á",
+      "n": "a acute",
+      "c": "Latin Extended",
+      "k": [
+        "acute"
+      ]
+    },
+    {
+      "g": "à",
+      "n": "a grave",
+      "c": "Latin Extended",
+      "k": [
+        "grave"
+      ]
+    },
+    {
+      "g": "â",
+      "n": "a circumflex",
+      "c": "Latin Extended",
+      "k": [
+        "circumflex"
+      ]
+    },
+    {
+      "g": "ä",
+      "n": "a diaeresis",
+      "c": "Latin Extended",
+      "k": [
+        "umlaut",
+        "a"
+      ]
+    },
+    {
+      "g": "ã",
+      "n": "a tilde",
+      "c": "Latin Extended",
+      "k": [
+        "tilde"
+      ]
+    },
+    {
+      "g": "å",
+      "n": "a ring",
+      "c": "Latin Extended",
+      "k": [
+        "ring",
+        "angstrom"
+      ]
+    },
+    {
+      "g": "æ",
+      "n": "ae",
+      "c": "Latin Extended",
+      "k": [
+        "ash"
+      ]
+    },
+    {
+      "g": "ç",
+      "n": "c cedilla",
+      "c": "Latin Extended",
+      "k": [
+        "cedilla"
+      ]
+    },
+    {
+      "g": "é",
+      "n": "e acute",
+      "c": "Latin Extended",
+      "k": [
+        "acute"
+      ]
+    },
+    {
+      "g": "è",
+      "n": "e grave",
+      "c": "Latin Extended",
+      "k": [
+        "grave"
+      ]
+    },
+    {
+      "g": "ê",
+      "n": "e circumflex",
+      "c": "Latin Extended",
+      "k": [
+        "circumflex"
+      ]
+    },
+    {
+      "g": "ë",
+      "n": "e diaeresis",
+      "c": "Latin Extended",
+      "k": [
+        "umlaut"
+      ]
+    },
+    {
+      "g": "í",
+      "n": "i acute",
+      "c": "Latin Extended",
+      "k": [
+        "acute"
+      ]
+    },
+    {
+      "g": "ï",
+      "n": "i diaeresis",
+      "c": "Latin Extended",
+      "k": [
+        "umlaut"
+      ]
+    },
+    {
+      "g": "ñ",
+      "n": "n tilde",
+      "c": "Latin Extended",
+      "k": [
+        "tilde",
+        "spanish"
+      ]
+    },
+    {
+      "g": "ó",
+      "n": "o acute",
+      "c": "Latin Extended",
+      "k": [
+        "acute"
+      ]
+    },
+    {
+      "g": "ô",
+      "n": "o circumflex",
+      "c": "Latin Extended",
+      "k": [
+        "circumflex"
+      ]
+    },
+    {
+      "g": "ö",
+      "n": "o diaeresis",
+      "c": "Latin Extended",
+      "k": [
+        "umlaut"
+      ]
+    },
+    {
+      "g": "ø",
+      "n": "o stroke",
+      "c": "Latin Extended",
+      "k": [
+        "slash"
+      ]
+    },
+    {
+      "g": "ú",
+      "n": "u acute",
+      "c": "Latin Extended",
+      "k": [
+        "acute"
+      ]
+    },
+    {
+      "g": "ü",
+      "n": "u diaeresis",
+      "c": "Latin Extended",
+      "k": [
+        "umlaut"
+      ]
+    },
+    {
+      "g": "ß",
+      "n": "sharp s",
+      "c": "Latin Extended",
+      "k": [
+        "eszett",
+        "german"
+      ]
+    },
+    {
+      "g": "œ",
+      "n": "oe",
+      "c": "Latin Extended",
+      "k": [
+        "ethel"
+      ]
+    },
+    {
+      "g": "—",
+      "n": "Em dash",
+      "c": "Punctuation",
+      "k": [
+        "dash",
+        "em"
+      ]
+    },
+    {
+      "g": "–",
+      "n": "En dash",
+      "c": "Punctuation",
+      "k": [
+        "dash",
+        "en"
+      ]
+    },
+    {
+      "g": "―",
+      "n": "Horizontal bar",
+      "c": "Punctuation",
+      "k": [
+        "dash",
+        "quotation"
+      ]
+    },
+    {
+      "g": "…",
+      "n": "Ellipsis",
+      "c": "Punctuation",
+      "k": [
+        "dots",
+        "ellipsis"
+      ]
+    },
+    {
+      "g": "‘",
+      "n": "Left single quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote"
+      ]
+    },
+    {
+      "g": "’",
+      "n": "Right single quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote",
+        "apostrophe"
+      ]
+    },
+    {
+      "g": "“",
+      "n": "Left double quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote"
+      ]
+    },
+    {
+      "g": "”",
+      "n": "Right double quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote"
+      ]
+    },
+    {
+      "g": "‚",
+      "n": "Single low-9 quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote"
+      ]
+    },
+    {
+      "g": "„",
+      "n": "Double low-9 quotation mark",
+      "c": "Punctuation",
+      "k": [
+        "quote"
+      ]
+    },
+    {
+      "g": "‹",
+      "n": "Single left-pointing angle quotation",
+      "c": "Punctuation",
+      "k": [
+        "guillemet"
+      ]
+    },
+    {
+      "g": "›",
+      "n": "Single right-pointing angle quotation",
+      "c": "Punctuation",
+      "k": [
+        "guillemet"
+      ]
+    },
+    {
+      "g": "«",
+      "n": "Left guillemet",
+      "c": "Punctuation",
+      "k": [
+        "quote",
+        "french"
+      ]
+    },
+    {
+      "g": "»",
+      "n": "Right guillemet",
+      "c": "Punctuation",
+      "k": [
+        "quote",
+        "french"
+      ]
+    },
+    {
+      "g": "‽",
+      "n": "Interrobang",
+      "c": "Punctuation",
+      "k": [
+        "question",
+        "exclaim"
+      ]
+    },
+    {
+      "g": "¿",
+      "n": "Inverted question mark",
+      "c": "Punctuation",
+      "k": [
+        "spanish"
+      ]
+    },
+    {
+      "g": "¡",
+      "n": "Inverted exclamation mark",
+      "c": "Punctuation",
+      "k": [
+        "spanish"
+      ]
+    },
+    {
+      "g": "‐",
+      "n": "Hyphen",
+      "c": "Punctuation",
+      "k": [
+        "hyphen"
+      ]
+    },
+    {
+      "g": "‑",
+      "n": "Non-breaking hyphen",
+      "c": "Punctuation",
+      "k": [
+        "hyphen"
+      ]
+    },
+    {
+      "g": "■",
+      "n": "Black square",
+      "c": "Shapes",
+      "k": [
+        "square"
+      ]
+    },
+    {
+      "g": "□",
+      "n": "White square",
+      "c": "Shapes",
+      "k": [
+        "square"
+      ]
+    },
+    {
+      "g": "▪",
+      "n": "Black small square",
+      "c": "Shapes",
+      "k": [
+        "square"
+      ]
+    },
+    {
+      "g": "▫",
+      "n": "White small square",
+      "c": "Shapes",
+      "k": [
+        "square"
+      ]
+    },
+    {
+      "g": "●",
+      "n": "Black circle",
+      "c": "Shapes",
+      "k": [
+        "circle",
+        "dot"
+      ]
+    },
+    {
+      "g": "○",
+      "n": "White circle",
+      "c": "Shapes",
+      "k": [
+        "circle"
+      ]
+    },
+    {
+      "g": "◆",
+      "n": "Black diamond",
+      "c": "Shapes",
+      "k": [
+        "diamond"
+      ]
+    },
+    {
+      "g": "◇",
+      "n": "White diamond",
+      "c": "Shapes",
+      "k": [
+        "diamond"
+      ]
+    },
+    {
+      "g": "▲",
+      "n": "Black up-pointing triangle",
+      "c": "Shapes",
+      "k": [
+        "triangle"
+      ]
+    },
+    {
+      "g": "△",
+      "n": "White up-pointing triangle",
+      "c": "Shapes",
+      "k": [
+        "triangle"
+      ]
+    },
+    {
+      "g": "▼",
+      "n": "Black down-pointing triangle",
+      "c": "Shapes",
+      "k": [
+        "triangle"
+      ]
+    },
+    {
+      "g": "▶",
+      "n": "Black right-pointing triangle",
+      "c": "Shapes",
+      "k": [
+        "play"
+      ]
+    },
+    {
+      "g": "◀",
+      "n": "Black left-pointing triangle",
+      "c": "Shapes",
+      "k": [
+        "back"
+      ]
+    },
+    {
+      "g": "◉",
+      "n": "Fisheye",
+      "c": "Shapes",
+      "k": [
+        "circle"
+      ]
+    },
+    {
+      "g": "◊",
+      "n": "Lozenge",
+      "c": "Shapes",
+      "k": [
+        "diamond"
+      ]
+    },
+    {
+      "g": "▬",
+      "n": "Black rectangle",
+      "c": "Shapes",
+      "k": [
+        "bar"
+      ]
+    },
+    {
+      "g": "▭",
+      "n": "White rectangle",
+      "c": "Shapes",
+      "k": [
+        "bar"
+      ]
+    },
+    {
+      "g": "☀",
+      "n": "Black sun with rays",
+      "c": "Weather",
+      "k": [
+        "sun",
+        "weather"
+      ]
+    },
+    {
+      "g": "☁",
+      "n": "Cloud",
+      "c": "Weather",
+      "k": [
+        "cloud",
+        "weather"
+      ]
+    },
+    {
+      "g": "☂",
+      "n": "Umbrella",
+      "c": "Weather",
+      "k": [
+        "rain"
+      ]
+    },
+    {
+      "g": "☃",
+      "n": "Snowman",
+      "c": "Weather",
+      "k": [
+        "snow"
+      ]
+    },
+    {
+      "g": "☄",
+      "n": "Comet",
+      "c": "Weather",
+      "k": [
+        "space"
+      ]
+    },
+    {
+      "g": "☽",
+      "n": "First quarter moon",
+      "c": "Weather",
+      "k": [
+        "moon"
+      ]
+    },
+    {
+      "g": "☾",
+      "n": "Last quarter moon",
+      "c": "Weather",
+      "k": [
+        "moon"
+      ]
+    },
+    {
+      "g": "❄",
+      "n": "Snowflake",
+      "c": "Weather",
+      "k": [
+        "snow",
+        "cold"
+      ]
+    },
+    {
+      "g": "❅",
+      "n": "Tight trifoliate snowflake",
+      "c": "Weather",
+      "k": [
+        "snow"
+      ]
+    },
+    {
+      "g": "❆",
+      "n": "Heavy chevron snowflake",
+      "c": "Weather",
+      "k": [
+        "snow"
+      ]
+    },
+    {
+      "g": "⚡",
+      "n": "High voltage",
+      "c": "Weather",
+      "k": [
+        "bolt",
+        "electric"
+      ]
+    },
+    {
+      "g": "🌡",
+      "n": "Thermometer",
+      "c": "Weather",
+      "k": [
+        "temp"
+      ]
+    },
+    {
+      "g": "µ",
+      "n": "Micro sign",
+      "c": "Units",
+      "k": [
+        "micro",
+        "mu"
+      ]
+    },
+    {
+      "g": "℃",
+      "n": "Degree Celsius",
+      "c": "Units",
+      "k": [
+        "celsius",
+        "temp"
+      ]
+    },
+    {
+      "g": "℉",
+      "n": "Degree Fahrenheit",
+      "c": "Units",
+      "k": [
+        "fahrenheit",
+        "temp"
+      ]
+    },
+    {
+      "g": "㎜",
+      "n": "Millimeter",
+      "c": "Units",
+      "k": [
+        "mm"
+      ]
+    },
+    {
+      "g": "㎝",
+      "n": "Centimeter",
+      "c": "Units",
+      "k": [
+        "cm"
+      ]
+    },
+    {
+      "g": "㎞",
+      "n": "Kilometer",
+      "c": "Units",
+      "k": [
+        "km"
+      ]
+    },
+    {
+      "g": "㎎",
+      "n": "Milligram",
+      "c": "Units",
+      "k": [
+        "mg"
+      ]
+    },
+    {
+      "g": "㎏",
+      "n": "Kilogram",
+      "c": "Units",
+      "k": [
+        "kg"
+      ]
+    },
+    {
+      "g": "㏄",
+      "n": "cc",
+      "c": "Units",
+      "k": [
+        "cubic",
+        "cm"
+      ]
+    },
+    {
+      "g": "ℓ",
+      "n": "Liter",
+      "c": "Units",
+      "k": [
+        "litre",
+        "l"
+      ]
+    },
+    {
+      "g": "Å",
+      "n": "Angstrom",
+      "c": "Units",
+      "k": [
+        "angstrom"
+      ]
+    },
+    {
+      "g": "‰",
+      "n": "Per mille",
+      "c": "Units",
+      "k": [
+        "permille"
+      ]
+    },
+    {
+      "g": "‱",
+      "n": "Per ten thousand",
+      "c": "Units",
+      "k": [
+        "basis",
+        "point"
+      ]
+    },
+    {
+      "g": "%",
+      "n": "Percent",
+      "c": "Units",
+      "k": [
+        "percent"
+      ]
+    }
+  ]
+}

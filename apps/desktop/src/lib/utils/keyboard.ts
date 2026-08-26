@@ -1,11 +1,15 @@
 export type NavAction =
   | "up"
   | "down"
+  | "left"
+  | "right"
   | "copy"
   | "escape"
   | "search"
   | "delete"
-  | "clear";
+  | "clear"
+  | "favorite"
+  | "variants";
 
 function isTextField(target: EventTarget | null | undefined): boolean {
   if (!target || typeof target !== "object") {
@@ -43,6 +47,18 @@ export function navAction(event: {
   }
   if (event.key === "ArrowUp" || ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k")) {
     return "up";
+  }
+  if (!inField && event.key === "ArrowLeft") {
+    return "left";
+  }
+  if (!inField && event.key === "ArrowRight") {
+    return "right";
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "d") {
+    return "favorite";
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+    return "variants";
   }
   if (event.key === "Delete" && !inField && !event.shiftKey) {
     return "delete";

@@ -2,11 +2,24 @@
   import { onMount } from "svelte";
   import ConfirmDialog from "./lib/components/ConfirmDialog.svelte";
   import EmptyState from "./lib/components/EmptyState.svelte";
+  import EmojiPane from "./lib/components/EmojiPane.svelte";
   import HistoryList from "./lib/components/HistoryList.svelte";
   import PlaceholderPane from "./lib/components/PlaceholderPane.svelte";
   import SearchBar from "./lib/components/SearchBar.svelte";
   import StatusIndicator from "./lib/components/StatusIndicator.svelte";
+  import SymbolsPane from "./lib/components/SymbolsPane.svelte";
   import TabBar from "./lib/components/TabBar.svelte";
+  import {
+    closeVariants,
+    copyPickerSelected,
+    loadPicker,
+    loadSkinPref,
+    movePicker,
+    openVariants,
+    picker,
+    schedulePickerLoad,
+    toggleFavorite,
+  } from "./lib/stores/picker.svelte";
   import {
     cancelConfirm,
     clearSearch,
@@ -22,6 +35,7 @@
     startSession,
     togglePin,
   } from "./lib/stores/session.svelte";
+  import type { TabId } from "./lib/stores/session.svelte";
   import { escapeOutcome } from "./lib/utils/escape";
   import { listSurface } from "./lib/utils/historyView";
   import { navAction } from "./lib/utils/keyboard";
@@ -45,6 +59,13 @@
         ? session.connection.message
         : (session.historyError ?? ""),
   );
+  const searchPlaceholder = $derived(
+    session.tab === "emoji"
+      ? "Search emoji…"
+      : session.tab === "symbols"
+        ? "Search symbols and kaomoji…"
+        : "Search clipboard history…",
+  );
 
   onMount(() => {
     startSession();
@@ -54,10 +75,33 @@
     return () => clearInterval(tick);
   });
 
+  $effect(() => {
+    if (session.connection.kind === "connected") {
+      void loadSkinPref();
+      if (session.tab === "emoji" || session.tab === "symbols") {
+        void loadPicker();
+      }
+    }
+  });
+
   function focusSearch(): void {
     const el = document.getElementById("clipl-search") as HTMLInputElement | null;
     el?.focus();
     el?.select();
+  }
+
+  function onQuery(value: string): void {
+    setQuery(value);
+    if (session.tab !== "history") {
+      schedulePickerLoad();
+    }
+  }
+
+  function selectTab(tab: TabId): void {
+    session.tab = tab;
+    if (tab === "emoji" || tab === "symbols") {
+      void loadPicker();
+    }
   }
 
   function onKeydown(event: KeyboardEvent): void {
@@ -69,6 +113,12 @@
         event.preventDefault();
         void confirmAction();
       }
+      return;
+    }
+
+    if (picker.variantsOpen && event.key === "Escape") {
+      event.preventDefault();
+      closeVariants();
       return;
     }
 
@@ -87,11 +137,54 @@
       if (escapeOutcome(session.query) === "clear-search") {
         clearSearch();
         focusSearch();
+        if (session.tab !== "history") {
+          void loadPicker();
+        }
       } else {
         void closeApp();
       }
       return;
     }
+
+    const pickerTab = session.tab === "emoji" || session.tab === "symbols";
+    if (pickerTab) {
+      if (action === "up") {
+        event.preventDefault();
+        movePicker("up");
+        return;
+      }
+      if (action === "down") {
+        event.preventDefault();
+        movePicker("down");
+        return;
+      }
+      if (action === "left") {
+        event.preventDefault();
+        movePicker("left");
+        return;
+      }
+      if (action === "right") {
+        event.preventDefault();
+        movePicker("right");
+        return;
+      }
+      if (action === "copy") {
+        event.preventDefault();
+        void copyPickerSelected();
+        return;
+      }
+      if (action === "favorite") {
+        event.preventDefault();
+        void toggleFavorite();
+        return;
+      }
+      if (action === "variants") {
+        event.preventDefault();
+        openVariants();
+      }
+      return;
+    }
+
     if (session.tab !== "history") {
       return;
     }
@@ -127,9 +220,9 @@
     </div>
   </header>
 
-  <SearchBar value={session.query} onQuery={setQuery} />
+  <SearchBar value={session.query} placeholder={searchPlaceholder} onQuery={onQuery} />
 
-  <TabBar active={session.tab} onSelect={(tab) => (session.tab = tab)} />
+  <TabBar active={session.tab} onSelect={selectTab} />
 
   {#if session.tab === "history"}
     <section class="pane" aria-label="Clipboard history">
@@ -177,9 +270,9 @@
       {/if}
     </section>
   {:else if session.tab === "emoji"}
-    <PlaceholderPane title="Emoji" summary="The emoji catalog is not part of this phase." />
+    <section class="pane" aria-label="Emoji"><EmojiPane /></section>
   {:else if session.tab === "symbols"}
-    <PlaceholderPane title="Symbols" summary="Symbol search will land in a later milestone." />
+    <section class="pane" aria-label="Symbols"><SymbolsPane /></section>
   {:else}
     <PlaceholderPane title="Snippets" summary="Named snippets are not wired yet." />
   {/if}
@@ -189,8 +282,9 @@
   {/if}
 
   <footer>
-    <span><kbd>↑</kbd><kbd>↓</kbd> Navigate</span>
+    <span><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> Navigate</span>
     <span><kbd>Enter</kbd> Copy</span>
+    <span><kbd>Ctrl</kbd>+<kbd>D</kbd> Favorite</span>
     <span><kbd>Esc</kbd> Close</span>
   </footer>
 </main>

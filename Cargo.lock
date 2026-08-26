@@ -507,9 +507,11 @@ dependencies = [
  "clap",
  "clipl-clipboard",
  "clipl-core",
+ "clipl-emoji",
  "clipl-platform",
  "clipl-privacy",
  "clipl-protocol",
+ "clipl-symbols",
  "ctrlc",
  "tempfile",
  "tracing",
@@ -535,6 +537,10 @@ name = "clipl-emoji"
 version = "0.1.0"
 dependencies = [
  "clipl-core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "uuid",
 ]
 
 [[package]]
@@ -585,6 +591,7 @@ version = "0.1.0"
 dependencies = [
  "clipl-core",
  "serde",
+ "serde_json",
 ]
 
 [[package]]

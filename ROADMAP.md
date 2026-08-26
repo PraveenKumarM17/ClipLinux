@@ -2,7 +2,7 @@
 
 Status of the product relative to the [master plan](MASTER_PLAN.md).
 
-## Current milestone: Production desktop shell (Phase 3A)
+## Current milestone: Emoji + symbols engine (Phase 3B)
 
 - [x] Cargo workspace and crate boundaries
 - [x] Domain types and traits
@@ -13,18 +13,20 @@ Status of the product relative to the [master plan](MASTER_PLAN.md).
 - [x] X11 CLIPBOARD watch via XFixes (text)
 - [x] Honest Wayland / GNOME Unsupported watch
 - [x] Tauri v2 + Svelte history picker (daemon IPC, search, pin/delete/copy)
+- [x] Unicode 17.0 emoji catalog, search, categories, skin tones, favorites
+- [x] Curated symbols + kaomoji picker
 - [ ] Global hotkeys / overlay popup
-- [ ] Emoji / symbols / snippets catalogs in the UI
+- [ ] Snippets catalogs in the UI
 - [ ] Remote media providers
 - [ ] GNOME Shell extension clipboard bridge
 
-## Milestone C — Palette UI (partial: Phase 3A)
+## Milestone C — Palette UI (Phase 3A + 3B)
 
-**Ships:** Tauri v2 picker window, daemon IPC, clipboard history, search,
-keyboard navigation, pin/delete/clear, daemon status, placeholder panes.
+**Ships:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
+kaomoji, daemon IPC, keyboard navigation.
 
-**Does not ship:** global Super+V, auto-paste, emoji database, GIF search,
-sticker store, packaging.
+**Does not ship:** global Super+V, auto-paste, GIF search, sticker store,
+packaging, snippets UI.
 
 ## Milestone D — Desktop environment adapters
 

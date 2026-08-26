@@ -18,6 +18,58 @@ export interface HistoryRow {
   source: string;
 }
 
+export type PickerKind = "emoji" | "symbol" | "kaomoji";
+
+export interface PickerItem {
+  glyph: string;
+  base: string;
+  name: string;
+  category: string;
+  has_skin_tones: boolean;
+  variants: string[];
+  favorite: boolean;
+}
+
+export const EMOJI_CATEGORIES = [
+  "Frequently Used",
+  "Smileys & Emotion",
+  "People & Body",
+  "Animals & Nature",
+  "Food & Drink",
+  "Travel & Places",
+  "Activities",
+  "Objects",
+  "Symbols",
+  "Flags",
+] as const;
+
+export const SYMBOL_CATEGORIES = [
+  "General",
+  "Arrows",
+  "Math",
+  "Currency",
+  "Technical",
+  "Greek",
+  "Latin Extended",
+  "Punctuation",
+  "Shapes",
+  "Stars",
+  "Weather",
+  "Units",
+] as const;
+
+export const KAOMOJI_CATEGORIES = [
+  "Happy",
+  "Sad",
+  "Angry",
+  "Shrug",
+  "Table Flip",
+  "Cute",
+  "Surprised",
+  "Actions",
+  "Other",
+] as const;
+
 export function isTauriRuntime(): boolean {
   return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
@@ -71,4 +123,48 @@ export async function closeWindow(): Promise<void> {
     return;
   }
   return invoke<void>("cmd_close_window");
+}
+
+export async function searchEmoji(query: string, limit = 80): Promise<PickerItem[]> {
+  return invoke<PickerItem[]>("cmd_search_emoji", { query, limit });
+}
+
+export async function listEmojiCategory(category: string, limit = 400): Promise<PickerItem[]> {
+  return invoke<PickerItem[]>("cmd_list_emoji_category", { category, limit });
+}
+
+export async function searchPicker(
+  kind: PickerKind,
+  query: string,
+  limit = 80,
+): Promise<PickerItem[]> {
+  return invoke<PickerItem[]>("cmd_search_picker", { kind, query, limit });
+}
+
+export async function listPickerCategory(kind: PickerKind, category: string): Promise<PickerItem[]> {
+  return invoke<PickerItem[]>("cmd_list_picker_category", { kind, category });
+}
+
+export async function pickerFavorites(kind: PickerKind): Promise<PickerItem[]> {
+  return invoke<PickerItem[]>("cmd_picker_favorites", { kind });
+}
+
+export async function setPickerFavorite(
+  kind: PickerKind,
+  glyph: string,
+  favorite: boolean,
+): Promise<boolean> {
+  return invoke<boolean>("cmd_set_picker_favorite", { kind, glyph, favorite });
+}
+
+export async function skinTonePref(): Promise<string> {
+  return invoke<string>("cmd_skin_tone_pref");
+}
+
+export async function setSkinTonePref(tone: string): Promise<string> {
+  return invoke<string>("cmd_set_skin_tone_pref", { tone });
+}
+
+export async function copyPickerItem(kind: PickerKind, glyph: string, base: string): Promise<void> {
+  return invoke<void>("cmd_copy_picker_item", { kind, glyph, base });
 }

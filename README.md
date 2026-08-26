@@ -7,10 +7,10 @@ stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-**Current milestone:** production desktop shell (Phase 3A). Clipboard history
-daemon, SQLite, Unix IPC, X11 watch, and a Tauri + Svelte picker that talks to
-the daemon. Wayland clipboard monitoring is **unsupported** until a compositor
-adapter or GNOME extension exists. Global hotkeys are not in this phase.
+**Current milestone:** full offline emoji + symbols picker (Phase 3B), plus the
+Phase 3A desktop history shell. Wayland clipboard monitoring is still
+**unsupported** until a compositor adapter or GNOME extension exists. Global
+hotkeys are not in this phase.
 
 ## Quick start
 
@@ -54,6 +54,8 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 | [docs/architecture/storage.md](docs/architecture/storage.md) | SQLite schema and paths |
 | [docs/architecture/desktop.md](docs/architecture/desktop.md) | Tauri + Svelte picker |
 | [docs/architecture/desktop-daemon-boundary.md](docs/architecture/desktop-daemon-boundary.md) | Why the UI never opens SQLite |
+| [docs/architecture/emoji-engine.md](docs/architecture/emoji-engine.md) | Unicode 17.0 emoji search |
+| [docs/architecture/symbols-engine.md](docs/architecture/symbols-engine.md) | Curated symbols and kaomoji |
 
 ## Layout
 

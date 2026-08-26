@@ -4,9 +4,11 @@
   let {
     value,
     onQuery,
+    placeholder = "Search clipboard history…",
   }: {
     value: string;
     onQuery: (next: string) => void;
+    placeholder?: string;
   } = $props();
 
   let input: HTMLInputElement | undefined;
@@ -23,7 +25,7 @@
     id="clipl-search"
     bind:this={input}
     type="search"
-    placeholder="Search clipboard history…"
+    placeholder={placeholder}
     autocomplete="off"
     spellcheck="false"
     value={value}

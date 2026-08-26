@@ -117,6 +117,8 @@ capabilities. See [PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md).
 
 See [docs/architecture/desktop.md](docs/architecture/desktop.md) and
 [docs/architecture/desktop-daemon-boundary.md](docs/architecture/desktop-daemon-boundary.md).
+Emoji/symbols search stays in the daemon (`clipl-emoji`, `clipl-symbols`); the
+webview only receives compact `PickerItem` rows.
 
 ### Daemon (`apps/daemon`)
 

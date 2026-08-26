@@ -25,7 +25,7 @@ pub mod traits;
 pub use capabilities::{Capability, PlatformCapabilities, SupportLevel};
 pub use clipboard::{ClipboardContent, ClipboardItem, ClipboardSource, ContentRef};
 pub use config::{ClipLinuxConfig, ClipboardConfig, HistoryConfig, PrivacyConfig};
-pub use emoji::Emoji;
+pub use emoji::{Emoji, SkinTone};
 pub use error::{Error, Result};
 pub use id::{ClipboardItemId, EmojiId, MediaItemId, PrivacyRuleId, SnippetId, StickerPackId};
 pub use media::{MediaItem, MediaKind, MediaSource, PackSource, StickerPack};
