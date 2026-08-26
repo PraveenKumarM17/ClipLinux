@@ -1,0 +1,37 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Node / Tauri frontend
+node_modules/
+dist/
+.svelte-kit/
+apps/desktop/dist/
+apps/desktop/.svelte-kit/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/gen/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+
+# Generated media cache (never commit user clipboard data)
+.cache/
+data/local/
+*.sqlite
+*.sqlite-journal
+*.db
+
+# Coverage / profiling
+coverage/
+*.profraw
+lcov.info

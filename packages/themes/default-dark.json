@@ -1,0 +1,12 @@
+{
+  "id": "unipick-default-dark",
+  "name": "Default Dark",
+  "version": 1,
+  "tokens": {
+    "bg": "#111216",
+    "fg": "#f4f4f5",
+    "muted": "#a1a1aa",
+    "accent": "#f59e0b",
+    "radius": "8px"
+  }
+}

@@ -1,0 +1,23 @@
+[package]
+name = "unipick-workspace-tests"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Cross-crate smoke tests for the UniPick workspace"
+publish = false
+
+[dependencies]
+unipick-core.workspace = true
+unipick-clipboard.workspace = true
+unipick-emoji.workspace = true
+unipick-media.workspace = true
+unipick-snippets.workspace = true
+unipick-symbols.workspace = true
+unipick-privacy.workspace = true
+unipick-platform.workspace = true
+unipick-protocol.workspace = true
+
+[lints]
+workspace = true

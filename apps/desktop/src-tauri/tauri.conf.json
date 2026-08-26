@@ -1,0 +1,34 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "UniPick",
+  "version": "0.1.0",
+  "identifier": "dev.unipick.UniPick",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "palette",
+        "title": "UniPick",
+        "width": 420,
+        "height": 560,
+        "resizable": false,
+        "decorations": false,
+        "visible": true,
+        "skipTaskbar": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": false,
+    "targets": "deb",
+    "icon": []
+  }
+}

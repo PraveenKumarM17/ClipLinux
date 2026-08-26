@@ -1,0 +1,15 @@
+[package]
+name = "unipick-media"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "Media provider registry and local sticker loading for UniPick"
+publish.workspace = true
+
+[dependencies]
+unipick-core.workspace = true
+
+[lints]
+workspace = true

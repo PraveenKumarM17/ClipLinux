@@ -1,0 +1,23 @@
+[package]
+name = "unipick-daemon"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "UniPick background daemon"
+publish.workspace = true
+
+[[bin]]
+name = "unipick-daemon"
+path = "src/main.rs"
+
+[dependencies]
+unipick-core.workspace = true
+unipick-platform.workspace = true
+unipick-privacy.workspace = true
+unipick-protocol.workspace = true
+clap.workspace = true
+
+[lints]
+workspace = true

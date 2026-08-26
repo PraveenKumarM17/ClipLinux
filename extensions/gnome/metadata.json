@@ -1,0 +1,7 @@
+{
+  "uuid": "unipick@unipick.dev",
+  "name": "UniPick",
+  "description": "UniPick GNOME Shell integration (not implemented).",
+  "shell-version": ["46", "47", "48"],
+  "url": "https://github.com/unipick/unipick"
+}

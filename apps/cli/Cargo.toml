@@ -1,0 +1,23 @@
+[package]
+name = "unipick"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+description = "UniPick command-line interface"
+publish.workspace = true
+
+[[bin]]
+name = "unipick"
+path = "src/main.rs"
+
+[dependencies]
+unipick-core.workspace = true
+unipick-platform.workspace = true
+unipick-protocol.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+
+[lints]
+workspace = true
