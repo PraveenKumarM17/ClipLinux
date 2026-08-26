@@ -14,7 +14,7 @@ Canonical document: [/ARCHITECTURE.md](../../ARCHITECTURE.md)
 | `clipl-symbols` | Non-emoji symbols |
 | `clipl-snippets` | Snippet CRUD |
 | `clipl-media` | Provider registry |
-| `clipl-platform` | XDG probe + clipboard backends |
+| `clipl-platform` | XDG probe + clipboard backends + activation backends |
 
 See also:
 
@@ -26,6 +26,7 @@ See also:
 - [desktop-daemon-boundary.md](desktop-daemon-boundary.md)
 - [emoji-engine.md](emoji-engine.md)
 - [symbols-engine.md](symbols-engine.md)
+- [activation.md](activation.md)
 
 ## Why core has in-memory placeholders
 

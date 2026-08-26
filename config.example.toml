@@ -18,3 +18,18 @@ block_otp = true
 selection = "clipboard"
 # consecutive | none
 deduplication_policy = "consecutive"
+
+[activation]
+enabled = true
+# May conflict with GNOME's notification list or other WM bindings.
+shortcut = "Super+V"
+# toggle | show
+behavior = "toggle"
+
+[activation.x11]
+# Native XGrabKey. Ignored on Wayland even if DISPLAY is set.
+enabled = true
+
+[activation.gnome]
+# Use the GNOME Shell extension path. The extension owns the GSettings shortcut.
+enabled = true

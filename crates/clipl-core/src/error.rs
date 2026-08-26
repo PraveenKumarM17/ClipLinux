@@ -39,6 +39,9 @@ pub enum Error {
     /// Local I/O failure (socket, files, directories).
     #[error("io: {0}")]
     Io(String),
+    /// Activation / shortcut registration failure.
+    #[error("activation: {0}")]
+    Activation(String),
     /// Catch-all for backend-specific messages that have no richer mapping yet.
     #[error("{0}")]
     Message(String),

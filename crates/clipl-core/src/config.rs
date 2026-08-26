@@ -3,6 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::activation::{ActivationBehavior, Shortcut};
 use crate::error::{Error, Result};
 
 /// Top-level configuration file (`config.toml`).
@@ -17,6 +18,9 @@ pub struct ClipLinuxConfig {
     /// Clipboard capture.
     #[serde(default)]
     pub clipboard: ClipboardConfig,
+    /// Picker activation (shortcuts / desktop integration).
+    #[serde(default)]
+    pub activation: ActivationConfig,
 }
 
 impl ClipLinuxConfig {
@@ -53,6 +57,8 @@ impl ClipLinuxConfig {
                 )));
             }
         }
+        Shortcut::parse(&self.activation.shortcut)?;
+        ActivationBehavior::parse(&self.activation.behavior)?;
         Ok(())
     }
 }
@@ -155,6 +161,86 @@ fn default_dedup() -> String {
     "consecutive".into()
 }
 
+fn default_shortcut() -> String {
+    crate::activation::DEFAULT_SHORTCUT.into()
+}
+
+fn default_behavior() -> String {
+    "toggle".into()
+}
+
+/// Picker activation. Backends do not all own the same shortcut registration.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ActivationConfig {
+    /// Master switch. When false, no native grab is attempted.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+    /// Preferred chord (`Super+V`). GNOME may own a separate GSettings key.
+    #[serde(default = "default_shortcut")]
+    pub shortcut: String,
+    /// `toggle` or `show`.
+    #[serde(default = "default_behavior")]
+    pub behavior: String,
+    /// X11 native grab. Ignored on Wayland even if `DISPLAY` is set.
+    #[serde(default)]
+    pub x11: ActivationX11Config,
+    /// GNOME Shell extension integration.
+    #[serde(default)]
+    pub gnome: ActivationGnomeConfig,
+}
+
+impl Default for ActivationConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            shortcut: default_shortcut(),
+            behavior: default_behavior(),
+            x11: ActivationX11Config::default(),
+            gnome: ActivationGnomeConfig::default(),
+        }
+    }
+}
+
+impl ActivationConfig {
+    /// Parsed shortcut.
+    pub fn shortcut(&self) -> Result<Shortcut> {
+        Shortcut::parse(&self.shortcut)
+    }
+
+    /// Parsed behaviour.
+    pub fn behavior(&self) -> Result<ActivationBehavior> {
+        ActivationBehavior::parse(&self.behavior)
+    }
+}
+
+/// X11-specific activation switches.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ActivationX11Config {
+    /// Register `XGrabKey` when the session is X11.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+impl Default for ActivationX11Config {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
+/// GNOME-specific activation switches.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct ActivationGnomeConfig {
+    /// Use the Shell extension path on GNOME Wayland / GNOME sessions.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+impl Default for ActivationGnomeConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -175,5 +261,19 @@ mod tests {
     fn rejects_unknown_selection() {
         let toml = "[clipboard]\nselection = \"middle\"\n";
         assert!(ClipLinuxConfig::from_toml_str(toml).is_err());
+    }
+
+    #[test]
+    fn rejects_bare_activation_shortcut() {
+        let toml = "[activation]\nshortcut = \"v\"\n";
+        assert!(ClipLinuxConfig::from_toml_str(toml).is_err());
+    }
+
+    #[test]
+    fn accepts_activation_table() {
+        let toml = "[activation]\nshortcut = \"Ctrl+Shift+space\"\nbehavior = \"show\"\n";
+        let cfg = ClipLinuxConfig::from_toml_str(toml).unwrap();
+        assert_eq!(cfg.activation.behavior, "show");
+        assert_eq!(cfg.activation.shortcut().unwrap().key, "space");
     }
 }

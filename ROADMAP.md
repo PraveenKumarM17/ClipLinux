@@ -2,7 +2,7 @@
 
 Status of the product relative to the [master plan](MASTER_PLAN.md).
 
-## Current milestone: Emoji + symbols engine (Phase 3B)
+## Current milestone: Activation (Phase 4A)
 
 - [x] Cargo workspace and crate boundaries
 - [x] Domain types and traits
@@ -15,7 +15,10 @@ Status of the product relative to the [master plan](MASTER_PLAN.md).
 - [x] Tauri v2 + Svelte history picker (daemon IPC, search, pin/delete/copy)
 - [x] Unicode 17.0 emoji catalog, search, categories, skin tones, favorites
 - [x] Curated symbols + kaomoji picker
-- [ ] Global hotkeys / overlay popup
+- [x] Capability-based activation (X11 `XGrabKey`, GNOME Shell extension)
+- [x] `clipl open` / `toggle` / `hide`
+- [ ] KDE / Sway / Hyprland activation backends
+- [ ] Overlay popup positioning
 - [ ] Snippets catalogs in the UI
 - [ ] Remote media providers
 - [ ] GNOME Shell extension clipboard bridge
@@ -25,15 +28,15 @@ Status of the product relative to the [master plan](MASTER_PLAN.md).
 **Ships:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
 kaomoji, daemon IPC, keyboard navigation.
 
-**Does not ship:** global Super+V, auto-paste, GIF search, sticker store,
-packaging, snippets UI.
+**Does not ship:** auto-paste, GIF search, sticker store, packaging, snippets UI.
 
-## Milestone D — Desktop environment adapters
+## Milestone D — Activation & desktop adapters (Phase 4A started)
 
-**Ships:** GNOME extension clipboard push and/or KDE integration with
-capability bits flipping from `Unsupported`/`Unknown` to a real `SupportLevel`.
+**Ships in 4A:** X11 native shortcut, GNOME Shell **activation** extension,
+desktop show/hide/toggle, CLI fallback.
 
-**Does not ship:** “generic Wayland clipboard watch works everywhere”.
+**Does not ship:** KDE backend, Sway/Hyprland in-process grabs, generic Wayland
+global hotkeys, GNOME clipboard push.
 
 ## Milestone E — Media
 

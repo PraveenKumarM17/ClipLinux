@@ -194,6 +194,7 @@ export async function copySelected(): Promise<void> {
   try {
     await api.copyHistoryItem(item.id);
     setNotice("Copied to clipboard.");
+    await api.hidePicker();
   } catch (err) {
     setNotice(err instanceof Error ? err.message : String(err));
   }

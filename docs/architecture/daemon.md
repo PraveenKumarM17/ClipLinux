@@ -11,7 +11,9 @@ Status: **IMPLEMENTED** as a resident process with IPC, SQLite, and optional wat
 3. Select a clipboard backend (never X11-on-Wayland)
 4. Open `$XDG_DATA_HOME/clipl/history.sqlite3` (mode `0600`, dir `0700`)
 5. If `supports_watch()`, start a watch thread
-6. Listen on `$XDG_RUNTIME_DIR/clipl/daemon.sock` (mode `0600`)
+6. Select an activation backend (never X11 grab on Wayland)
+7. If the backend supports native listen, `XGrabKey` then an event thread
+8. Listen on `$XDG_RUNTIME_DIR/clipl/daemon.sock` (mode `0600`)
 
 If watch is unsupported, the daemon **still serves history** over IPC. That is a graceful degradation, not a crash.
 
@@ -24,7 +26,8 @@ echo when the desktop copies an existing item back to the clipboard.
 cargo run -p clipl-daemon -- --diagnose
 ```
 
-Prints session, backend, monitoring level, database path, socket, privacy, and history limit. Never prints clipboard payloads.
+Prints session, backend, monitoring level, database path, socket, privacy,
+history limit, and activation status. Never prints clipboard payloads.
 
 ## Shutdown
 

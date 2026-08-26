@@ -43,6 +43,12 @@ enum Commands {
         #[arg(long)]
         json: bool,
     },
+    /// Show the desktop picker (requires daemon + running desktop).
+    Open,
+    /// Hide the desktop picker (requires a subscribed desktop process).
+    Hide,
+    /// Toggle the desktop picker (requires a subscribed desktop process).
+    Toggle,
 }
 
 #[derive(Subcommand)]
@@ -93,6 +99,9 @@ fn dispatch(command: Commands) -> Result<(), clipl_core::Error> {
             limit,
             json,
         } => history(action, limit, json)?,
+        Commands::Open => desktop_action(clipl_protocol::Request::ShowDesktop)?,
+        Commands::Hide => desktop_action(clipl_protocol::Request::HideDesktop)?,
+        Commands::Toggle => desktop_action(clipl_protocol::Request::ToggleDesktop)?,
     }
     Ok(())
 }
@@ -100,7 +109,7 @@ fn dispatch(command: Commands) -> Result<(), clipl_core::Error> {
 fn doctor(json: bool) -> Result<(), clipl_core::Error> {
     let adapter = select_adapter();
     let identity = adapter.identity();
-    let cfg = clipl_core::ClipLinuxConfig::default();
+    let cfg = load_config();
     let caps = capabilities_for(&identity, &cfg.clipboard);
     let preferred = AdapterKind::preferred(&identity);
     let selected = select_clipboard_backend(&identity, &cfg.clipboard);
@@ -115,6 +124,7 @@ fn doctor(json: bool) -> Result<(), clipl_core::Error> {
             "identity": identity,
             "capabilities": caps,
             "socket": paths::socket_path(),
+            "activation": clipl_platform::select_activation_backend(&identity, &cfg.activation).snapshot,
         });
         println!("{}", serde_json::to_string_pretty(&payload).expect("json"));
         return Ok(());
@@ -143,6 +153,11 @@ fn doctor(json: bool) -> Result<(), clipl_core::Error> {
     );
     println!("  socket:             {}", paths::socket_path().display());
     println!();
+    let activation = clipl_platform::select_activation_backend(&identity, &cfg.activation);
+    print!(
+        "{}",
+        clipl_platform::format_activation_report(&identity, &activation, false)
+    );
     println!("Capabilities:");
     for cap in Capability::all() {
         let level = caps.level(*cap);
@@ -162,6 +177,14 @@ fn format_level(level: SupportLevel) -> &'static str {
     }
 }
 
+fn load_config() -> clipl_core::ClipLinuxConfig {
+    let path = paths::config_path();
+    std::fs::read_to_string(&path)
+        .ok()
+        .and_then(|text| clipl_core::ClipLinuxConfig::from_toml_str(&text).ok())
+        .unwrap_or_default()
+}
+
 fn client() -> Result<IpcClient, clipl_core::Error> {
     IpcClient::connect()
 }
@@ -172,6 +195,19 @@ fn ping() -> Result<(), clipl_core::Error> {
             println!("pong");
             Ok(())
         }
+        Response::Error { message } => Err(clipl_core::Error::Protocol(message)),
+        other => Err(clipl_core::Error::Protocol(format!(
+            "unexpected response: {other:?}"
+        ))),
+    }
+}
+
+fn desktop_action(request: Request) -> Result<(), clipl_core::Error> {
+    match client()?.request(request)? {
+        Response::DesktopRouted { delivered: true } => Ok(()),
+        Response::DesktopRouted { delivered: false } => Err(clipl_core::Error::Io(
+            "desktop picker is not running (start clipl-desktop, then retry)".into(),
+        )),
         Response::Error { message } => Err(clipl_core::Error::Protocol(message)),
         other => Err(clipl_core::Error::Protocol(format!(
             "unexpected response: {other:?}"
@@ -209,6 +245,28 @@ fn status(json: bool) -> Result<(), clipl_core::Error> {
                     "  history:     enabled={} limit={}",
                     status.history_enabled, status.history_limit
                 );
+                println!();
+                println!("Activation");
+                println!("  session:     {:?}", status.activation.session);
+                println!("  desktop:     {:?}", status.activation.desktop);
+                println!("  shortcut:    {}", status.activation.shortcut);
+                println!(
+                    "  backend:     {} ({})",
+                    status.activation.backend.as_str(),
+                    status.activation.capability.as_str()
+                );
+                println!("  status:      {}", status.activation.status.as_str());
+                println!(
+                    "  desktop app: {}",
+                    if status.activation.desktop_connected {
+                        "connected"
+                    } else {
+                        "not running"
+                    }
+                );
+                if !status.activation.reason.is_empty() {
+                    println!("  reason:      {}", status.activation.reason);
+                }
             }
             Ok(())
         }

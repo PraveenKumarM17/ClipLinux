@@ -1,7 +1,9 @@
 {
   "uuid": "clipl@io.clipl",
   "name": "ClipLinux",
-  "description": "ClipLinux GNOME Shell integration (not implemented).",
-  "shell-version": ["46", "47", "48"],
-  "url": "https://github.com/PraveenKumarM17/ClipLinux"
+  "description": "GNOME Shell shortcut that asks the local ClipLinux daemon to show the picker. Does not read clipboard history or open SQLite.",
+  "shell-version": ["46", "47", "48", "49", "50"],
+  "url": "https://github.com/PraveenKumarM17/ClipLinux",
+  "settings-schema": "org.gnome.shell.extensions.clipl",
+  "session-modes": ["user"]
 }

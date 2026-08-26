@@ -1,11 +1,10 @@
 # Desktop application
 
-Status: **IMPLEMENTED** for Phase 3A (history picker). Global hotkeys, overlay
-placement, emoji catalog, and packaging are **not** in this phase.
+Status: **IMPLEMENTED** for Phase 3A/3B picker plus Phase 4A show/hide.
 
 ClipLinux desktop (`clipl-desktop`, application id `io.clipl.ClipLinux`) is a
 compact Tauri v2 window with a Svelte 5 UI. It is a clipboard **picker**, not a
-dashboard.
+dashboard. The process stays running when the window is hidden.
 
 ## Layout
 
@@ -24,17 +23,17 @@ The Rust crate is a workspace member. **Default features are empty** so
 
 - About 440×560, resizable, minimum 360×420
 - Centered, not maximized, native titlebar
-- No overlay positioning relative to the focused window (later phase)
-
-## What the UI does
+- Escape and the titlebar close button **hide** the window (they do not quit)
+- Overlay positioning relative to the focused window is still later
 
 On startup the host connects to `clipl-daemon`, fetches status and recent
-history, and focuses search.
+history, focuses search, and **subscribes** for activation events.
 
-| Tab | Phase 3A |
+| Tab | Status |
 | --- | --- |
 | History | Functional: list, search, pin, delete, clear, copy |
-| Emoji / Symbols / Snips | Placeholder (“coming next”) |
+| Emoji / Symbols | Functional offline pickers |
+| Snips | Placeholder |
 
 Keyboard (history tab):
 
@@ -43,7 +42,7 @@ Keyboard (history tab):
 | ↑ / Ctrl+K | Previous item |
 | ↓ / Ctrl+J | Next item |
 | Enter | Copy selected text to the OS clipboard |
-| Escape | Clear search if non-empty; otherwise close |
+| Escape | Clear search if non-empty; otherwise **hide** |
 | Ctrl+F | Focus search |
 | Delete | Confirm-delete selected **unpinned** item |
 | Ctrl+Shift+Delete | Confirm-clear unpinned history |

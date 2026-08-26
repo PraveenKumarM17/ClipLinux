@@ -52,6 +52,6 @@ describe("nextIndex", () => {
 describe("escapeOutcome", () => {
   it("clears search first", () => {
     expect(escapeOutcome("foo")).toBe("clear-search");
-    expect(escapeOutcome("")).toBe("close");
+    expect(escapeOutcome("")).toBe("hide");
   });
 });

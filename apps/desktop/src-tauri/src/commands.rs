@@ -226,6 +226,7 @@ mod tests {
             privacy_enabled: true,
             history_enabled: true,
             history_limit: 500,
+            activation: clipl_protocol::ActivationReport::default(),
         }
     }
 

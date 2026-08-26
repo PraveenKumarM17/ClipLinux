@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.clipl" path="/org/gnome/shell/extensions/clipl/">
+    <key name="activate-shortcut" type="as">
+      <default><![CDATA[['<Super>v']]]></default>
+      <summary>Activate ClipLinux</summary>
+      <description>
+        Keyboard shortcut owned by this GNOME Shell extension. When pressed,
+        the extension sends ToggleDesktop to the local ClipLinux Unix socket.
+        It does not capture other keys and does not run shell commands.
+      </description>
+    </key>
+  </schema>
+</schemalist>

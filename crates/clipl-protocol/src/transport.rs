@@ -93,6 +93,56 @@ impl IpcClient {
     }
 }
 
+/// Long-lived desktop subscriber. Reads activation events after `SubscribeDesktop`.
+pub struct ActivationSubscriber {
+    stream: UnixStream,
+}
+
+impl ActivationSubscriber {
+    /// Connect and subscribe. Read timeout is cleared so hide/show can wait.
+    pub fn connect_path(path: &Path) -> Result<Self> {
+        let mut stream = UnixStream::connect(path).map_err(|err| {
+            Error::Io(format!(
+                "clipl-daemon is not running (socket {}): {err}",
+                path.display()
+            ))
+        })?;
+        stream
+            .set_write_timeout(Some(Duration::from_secs(5)))
+            .map_err(|err| Error::Io(err.to_string()))?;
+        let outgoing = Envelope::new(Message::Request(Request::SubscribeDesktop));
+        write_frame(&mut stream, &outgoing)?;
+        stream
+            .set_read_timeout(Some(Duration::from_secs(5)))
+            .map_err(|err| Error::Io(err.to_string()))?;
+        let incoming = read_frame(&mut stream)?;
+        if incoming.id != outgoing.id {
+            return Err(Error::Protocol("response correlation id mismatch".into()));
+        }
+        match incoming.payload {
+            Message::Response(Response::DesktopSubscribed { .. }) => {
+                stream
+                    .set_read_timeout(None)
+                    .map_err(|err| Error::Io(err.to_string()))?;
+                Ok(Self { stream })
+            }
+            Message::Response(Response::Error { message }) => Err(Error::Protocol(message)),
+            _ => Err(Error::Protocol("expected DesktopSubscribed".into())),
+        }
+    }
+
+    /// Block until the daemon sends an activation event.
+    pub fn recv(&mut self) -> Result<clipl_core::ActivationRequest> {
+        let incoming = read_frame(&mut self.stream)?;
+        match incoming.payload {
+            Message::Event(crate::Event::ActivatePicker { action }) => Ok(action),
+            other => Err(Error::Protocol(format!(
+                "expected ActivatePicker event, got {other:?}"
+            ))),
+        }
+    }
+}
+
 /// Restrictive permissions for a listening socket.
 pub fn set_socket_mode(path: &Path) -> Result<()> {
     std::fs::set_permissions(path, std::fs::Permissions::from_mode(0o600))

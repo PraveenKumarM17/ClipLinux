@@ -51,7 +51,22 @@ text to the daemon over the Unix socket — not key injection from the daemon.
 - `linux-generic` — XDG probe + capability fill
 - `x11` — XFixes backend
 - `wayland-generic` — honest stub
-- `gnome` — honest stub + extension boundary
+- `gnome` — honest stub + extension boundary (activation implemented)
+
+## Activation backend matrix (Phase 4A)
+
+| Session | Backend | Shortcut | Status |
+| --- | --- | --- | --- |
+| X11 | `x11` | `XGrabKey` of `activation.shortcut` | **IMPLEMENTED** Native. Never used on Wayland. |
+| GNOME Wayland | `gnome-shell` | GNOME extension GSettings | **IMPLEMENTED** Desktop-managed. Extension install is user-side. |
+| KDE Plasma Wayland | `kde-plasma` | — | **PLANNED** |
+| Sway / Hyprland | compositor bind | user config → `clipl toggle` | **UNSUPPORTED** in-process (correct mechanism is compositor config) |
+| Generic Wayland | `wayland-generic` | — | **UNSUPPORTED** |
+
+`clipl doctor` and `clipl status` print an Activation block. Super+V is the
+default and **may conflict** with the desktop (GNOME notifications, WM binds).
+
+See [docs/architecture/activation.md](docs/architecture/activation.md).
 
 ## Contributor rule
 

@@ -42,7 +42,8 @@ The webview calls Tauri commands, never raw sockets:
 | `cmd_clear_history` | `ClearHistory` (unpinned only) |
 | `cmd_pin_history_item` / `cmd_unpin_history_item` | `PinItem` / `UnpinItem` |
 | `cmd_copy_history_item` | `CopyItem` then OS clipboard write |
-| `cmd_close_window` | local window close |
+| `cmd_hide_picker` / `cmd_show_picker` / `cmd_toggle_picker` | local window visibility |
+| `cmd_close_window` | hide (does not quit) |
 
 History rows sent to the webview are DTOs (`preview`, `hidden`, timestamps).
 Full payloads are not forwarded except the one-shot `Copied.text` used by the

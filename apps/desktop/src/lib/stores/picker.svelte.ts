@@ -134,6 +134,7 @@ export async function copyPickerSelected(glyphOverride?: string): Promise<void> 
     await api.copyPickerItem(currentKind(), glyph, item.base);
     setNotice(`Copied ${glyph}`);
     picker.variantsOpen = false;
+    await api.hidePicker();
   } catch (err) {
     setNotice(err instanceof Error ? err.message : String(err));
   }

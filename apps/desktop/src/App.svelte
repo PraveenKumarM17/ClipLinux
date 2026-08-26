@@ -9,6 +9,7 @@
   import StatusIndicator from "./lib/components/StatusIndicator.svelte";
   import SymbolsPane from "./lib/components/SymbolsPane.svelte";
   import TabBar from "./lib/components/TabBar.svelte";
+  import * as api from "./lib/api/desktop";
   import {
     closeVariants,
     copyPickerSelected,
@@ -69,10 +70,19 @@
 
   onMount(() => {
     startSession();
+    let unlisten: (() => void) | undefined;
+    void api.onPickerActivated(() => {
+      focusSearch();
+    }).then((fn) => {
+      unlisten = fn;
+    });
     const tick = setInterval(() => {
       now = Date.now();
     }, 15_000);
-    return () => clearInterval(tick);
+    return () => {
+      unlisten?.();
+      clearInterval(tick);
+    };
   });
 
   $effect(() => {

@@ -50,6 +50,36 @@ fn workspace_crates_compose() {
 }
 
 #[test]
+fn gnome_extension_metadata_is_well_formed() {
+    let meta = include_str!("../../extensions/gnome/metadata.json");
+    assert!(meta.contains("\"uuid\": \"clipl@io.clipl\""));
+    assert!(meta.contains("org.gnome.shell.extensions.clipl"));
+    assert!(meta.contains("\"46\""));
+    assert!(meta.contains("\"47\""));
+    assert!(meta.contains("\"48\""));
+    assert!(meta.contains("\"50\""));
+}
+
+#[test]
+fn gnome_extension_does_not_spawn_shell() {
+    let js = include_str!("../../extensions/gnome/extension.js");
+    assert!(js.contains("ToggleDesktop"));
+    assert!(js.contains("addKeybinding"));
+    assert!(js.contains("removeKeybinding"));
+    assert!(!js.contains("spawn_command_line"));
+    assert!(!js.contains("GLib.spawn"));
+    assert!(!js.contains("xdg-open"));
+}
+
+#[test]
+fn gnome_schema_declares_shortcut() {
+    let xml =
+        include_str!("../../extensions/gnome/schemas/org.gnome.shell.extensions.clipl.gschema.xml");
+    assert!(xml.contains("activate-shortcut"));
+    assert!(xml.contains("&lt;Super&gt;v") || xml.contains("<![CDATA[['<Super>v']]]>"));
+}
+
+#[test]
 fn memory_clipboard_is_a_valid_backend() {
     let backend = clipl_core::placeholders::MemoryClipboard::default();
     assert_eq!(backend.name(), "memory");

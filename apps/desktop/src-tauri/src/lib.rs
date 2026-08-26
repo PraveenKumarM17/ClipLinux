@@ -11,6 +11,7 @@ mod commands;
 mod dto;
 mod ipc;
 mod picker;
+mod window;
 
 use clipl_core::PlatformCapabilities;
 use clipl_protocol::{Envelope, Message, Request, Response};
@@ -25,6 +26,10 @@ pub use picker::{
     copy_picker_item, list_emoji_category, list_picker_category, picker_favorites, search_emoji,
     search_picker, set_picker_favorite, set_skin_tone_pref, skin_tone_pref,
 };
+pub use window::{apply_activation, PickerVisibility};
+
+#[cfg(feature = "tauri-app")]
+use std::sync::Mutex;
 
 /// Application identifier used by Tauri and desktop files.
 pub const APP_ID: &str = "io.clipl.ClipLinux";
@@ -97,7 +102,48 @@ pub fn dispatch_json(bytes: &[u8]) -> Result<Envelope, clipl_core::Error> {
 
 #[cfg(feature = "tauri-app")]
 fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
+    use std::thread;
+    use std::time::Duration;
+
+    use clipl_core::paths;
+    use clipl_protocol::ActivationSubscriber;
+    use tauri::{Emitter, Manager};
+
     tauri::Builder::default()
+        .manage(PickerState {
+            visibility: Mutex::new(PickerVisibility::Shown),
+        })
+        .setup(|app| {
+            let handle = app.handle().clone();
+            thread::spawn(move || loop {
+                match ActivationSubscriber::connect_path(&paths::socket_path()) {
+                    Ok(mut sub) => loop {
+                        match sub.recv() {
+                            Ok(action) => {
+                                let handle_inner = handle.clone();
+                                let _ = handle.run_on_main_thread(move || {
+                                    apply_window_action(&handle_inner, action);
+                                });
+                            }
+                            Err(_) => break,
+                        }
+                    },
+                    Err(_) => thread::sleep(Duration::from_millis(750)),
+                }
+            });
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+                if let Some(state) = window.try_state::<PickerState>() {
+                    if let Ok(mut vis) = state.visibility.lock() {
+                        *vis = PickerVisibility::Hidden;
+                    }
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             cmd_get_daemon_status,
             cmd_get_history,
@@ -108,6 +154,9 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
             cmd_unpin_history_item,
             cmd_copy_history_item,
             cmd_close_window,
+            cmd_hide_picker,
+            cmd_show_picker,
+            cmd_toggle_picker,
             cmd_search_emoji,
             cmd_list_emoji_category,
             cmd_search_picker,
@@ -120,6 +169,65 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
         ])
         .run(tauri::generate_context!())?;
     Ok(())
+}
+
+#[cfg(feature = "tauri-app")]
+struct PickerState {
+    visibility: Mutex<PickerVisibility>,
+}
+
+#[cfg(feature = "tauri-app")]
+fn apply_window_action(app: &tauri::AppHandle, action: clipl_core::ActivationRequest) {
+    use tauri::{Emitter, Manager};
+
+    let next = {
+        let Some(state) = app.try_state::<PickerState>() else {
+            return;
+        };
+        let Ok(mut vis) = state.visibility.lock() else {
+            return;
+        };
+        let next = apply_activation(*vis, action);
+        *vis = next;
+        next
+    };
+    let Some(window) = app.get_webview_window("palette") else {
+        return;
+    };
+    match next {
+        PickerVisibility::Shown => {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+            let _ = app.emit("picker-activated", ());
+        }
+        PickerVisibility::Hidden => {
+            let _ = window.hide();
+        }
+    }
+}
+
+#[cfg(feature = "tauri-app")]
+fn set_picker_visible(window: &tauri::WebviewWindow, app: &tauri::AppHandle, shown: bool) {
+    use tauri::{Emitter, Manager};
+
+    if let Some(state) = app.try_state::<PickerState>() {
+        if let Ok(mut vis) = state.visibility.lock() {
+            *vis = if shown {
+                PickerVisibility::Shown
+            } else {
+                PickerVisibility::Hidden
+            };
+        }
+    }
+    if shown {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+        let _ = app.emit("picker-activated", ());
+    } else {
+        let _ = window.hide();
+    }
 }
 
 #[cfg(feature = "tauri-app")]
@@ -173,8 +281,41 @@ fn cmd_copy_history_item(id: String) -> Result<(), String> {
 
 #[cfg(feature = "tauri-app")]
 #[tauri::command]
-fn cmd_close_window(window: tauri::Window) -> Result<(), String> {
-    window.close().map_err(|err| err.to_string())
+fn cmd_close_window(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+    set_picker_visible(&window, &app, false);
+    Ok(())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_hide_picker(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+    set_picker_visible(&window, &app, false);
+    Ok(())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_show_picker(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+    set_picker_visible(&window, &app, true);
+    Ok(())
+}
+
+#[cfg(feature = "tauri-app")]
+#[tauri::command]
+fn cmd_toggle_picker(window: tauri::WebviewWindow, app: tauri::AppHandle) -> Result<(), String> {
+    use tauri::Manager;
+    let shown = app
+        .try_state::<PickerState>()
+        .and_then(|state| {
+            state
+                .visibility
+                .lock()
+                .ok()
+                .map(|vis| *vis == PickerVisibility::Shown)
+        })
+        .unwrap_or(true);
+    set_picker_visible(&window, &app, !shown);
+    Ok(())
 }
 
 #[cfg(feature = "tauri-app")]

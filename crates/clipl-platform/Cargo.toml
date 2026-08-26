@@ -16,5 +16,8 @@ x11 = ["dep:x11rb"]
 clipl-core.workspace = true
 x11rb = { workspace = true, optional = true }
 
+[dev-dependencies]
+tempfile.workspace = true
+
 [lints]
 workspace = true

@@ -555,6 +555,7 @@ name = "clipl-platform"
 version = "0.1.0"
 dependencies = [
  "clipl-core",
+ "tempfile",
  "x11rb",
 ]
 

@@ -2,19 +2,22 @@
 
 #![forbid(unsafe_code)]
 
+mod activation;
 mod picker;
 mod transport;
 
 use clipl_core::{
-    ClipboardItem, ClipboardItemId, DesktopEnvironment, PlatformCapabilities, PrivacyRule,
-    SessionType, Snippet, SnippetId,
+    ActivationRequest, ClipboardItem, ClipboardItemId, DesktopEnvironment, PlatformCapabilities,
+    PrivacyRule, SessionType, Snippet, SnippetId,
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+pub use activation::ActivationReport;
 pub use picker::{PickerItem, PickerKind, SkinTonePref};
 pub use transport::{
-    cleanup_stale_socket, read_frame, set_socket_mode, write_frame, IpcClient, PROTOCOL_VERSION,
+    cleanup_stale_socket, read_frame, set_socket_mode, write_frame, ActivationSubscriber,
+    IpcClient, PROTOCOL_VERSION,
 };
 
 /// Envelope wrapping a request, response, or event.
@@ -196,6 +199,16 @@ pub enum Request {
         /// Glyph.
         glyph: String,
     },
+    /// Show the desktop picker if a subscriber is connected.
+    ShowDesktop,
+    /// Hide the desktop picker if a subscriber is connected.
+    HideDesktop,
+    /// Toggle the desktop picker if a subscriber is connected.
+    ToggleDesktop,
+    /// Desktop process keeps this connection open to receive activation events.
+    SubscribeDesktop,
+    /// Activation capability/status (no keystroke data).
+    GetActivationStatus,
 }
 
 /// Responses matching [`Request`].
@@ -258,6 +271,18 @@ pub enum Response {
     },
     /// Skin-tone preference.
     SkinTone(SkinTonePref),
+    /// Desktop was subscribed for activation events.
+    DesktopSubscribed {
+        /// True when a previous subscriber was replaced.
+        replaced: bool,
+    },
+    /// Show/hide/toggle was accepted. `delivered` is false when no desktop is connected.
+    DesktopRouted {
+        /// Whether a desktop subscriber received the event.
+        delivered: bool,
+    },
+    /// Activation snapshot.
+    Activation(ActivationReport),
     /// Request failed.
     Error {
         /// Error message. Must not contain clipboard secrets.
@@ -292,6 +317,9 @@ pub struct DaemonStatus {
     pub history_enabled: bool,
     /// Configured unpinned history cap.
     pub history_limit: u32,
+    /// Activation path for this session.
+    #[serde(default)]
+    pub activation: ActivationReport,
 }
 
 /// Clipboard watch availability as reported to clients.
@@ -324,6 +352,11 @@ pub enum Event {
         /// Snippet identity.
         id: SnippetId,
     },
+    /// Ask the subscribed desktop process to show, hide, or toggle the picker.
+    ActivatePicker {
+        /// Show, hide, or toggle.
+        action: ActivationRequest,
+    },
 }
 
 #[cfg(test)]
@@ -336,6 +369,14 @@ mod tests {
         let bytes = env.to_json_bytes().expect("ser");
         let back = Envelope::from_json_bytes(&bytes).expect("de");
         assert!(matches!(back.payload, Message::Request(Request::Ping)));
+    }
+
+    #[test]
+    fn toggle_desktop_json_tag() {
+        let env = Envelope::new(Message::Request(Request::ToggleDesktop));
+        let json = String::from_utf8(env.to_json_bytes().unwrap()).unwrap();
+        assert!(json.contains("ToggleDesktop"));
+        assert!(!json.contains("shell"));
     }
 
     #[test]
@@ -353,6 +394,7 @@ mod tests {
             privacy_enabled: true,
             history_enabled: true,
             history_limit: 500,
+            activation: ActivationReport::default(),
         };
         let env = Envelope::new(Message::Response(Response::Status(status.clone())));
         let back = Envelope::from_json_bytes(&env.to_json_bytes().unwrap()).unwrap();

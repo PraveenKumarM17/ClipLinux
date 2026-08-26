@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+mod activation;
 mod clipboard;
 
 use std::env;
@@ -16,6 +17,15 @@ pub use clipboard::X11Clipboard;
 pub use clipboard::{
     select_clipboard_backend, GnomeClipboard, NullClipboard, SelectedClipboard,
     WaylandGenericClipboard,
+};
+
+#[cfg(feature = "x11")]
+pub use activation::X11Activation;
+pub use activation::{
+    format_activation_report, gnome_extension_installed, gnome_extension_present_in,
+    select_activation_backend, select_activation_backend_with, GenericWaylandActivation,
+    GnomeActivation, HyprlandActivation, KdeActivation, NativeActivation, NullActivation,
+    SelectedActivation, SwayActivation, WlrootsActivation,
 };
 
 /// Probe `XDG_*` variables. This is capability detection, not a protocol hack.
@@ -94,7 +104,27 @@ pub fn capabilities_for(
     caps.set(Capability::ClipboardRead, selected.read);
     caps.set(Capability::ClipboardWrite, SupportLevel::Unsupported);
     caps.set(Capability::ClipboardWatch, selected.watch);
-    caps.set(Capability::GlobalHotkey, SupportLevel::Unknown);
+    match identity.session {
+        SessionType::X11 => {
+            caps.set(Capability::GlobalHotkey, SupportLevel::Native);
+        }
+        SessionType::Wayland => match identity.desktop {
+            DesktopEnvironment::Gnome => {
+                caps.set(Capability::GlobalHotkey, SupportLevel::Portal);
+            }
+            DesktopEnvironment::Sway
+            | DesktopEnvironment::Hyprland
+            | DesktopEnvironment::WlrootsGeneric => {
+                caps.set(Capability::GlobalHotkey, SupportLevel::Fallback);
+            }
+            _ => {
+                caps.set(Capability::GlobalHotkey, SupportLevel::Unsupported);
+            }
+        },
+        _ => {
+            caps.set(Capability::GlobalHotkey, SupportLevel::Unknown);
+        }
+    }
     caps.set(Capability::OverlayPopup, SupportLevel::Unknown);
     caps.set(Capability::ImagePaste, SupportLevel::Unsupported);
     caps.set(Capability::FilePaste, SupportLevel::Unknown);
@@ -102,7 +132,7 @@ pub fn capabilities_for(
 
     match identity.desktop {
         DesktopEnvironment::Gnome => {
-            caps.set(Capability::GnomeExtension, SupportLevel::Unknown);
+            caps.set(Capability::GnomeExtension, SupportLevel::Portal);
             caps.set(Capability::KdeIntegration, SupportLevel::Unsupported);
         }
         DesktopEnvironment::KdePlasma => {
@@ -231,5 +261,36 @@ mod tests {
             caps.level(Capability::ClipboardWatch),
             SupportLevel::Unsupported
         );
+        assert_eq!(
+            caps.level(Capability::GlobalHotkey),
+            SupportLevel::Unsupported
+        );
+    }
+
+    #[test]
+    fn gnome_wayland_hotkey_is_portal() {
+        let identity = PlatformIdentity {
+            platform: Platform::Linux,
+            session: SessionType::Wayland,
+            desktop: DesktopEnvironment::Gnome,
+            xdg_current_desktop: Some("GNOME".into()),
+            xdg_session_type: Some("wayland".into()),
+        };
+        let caps = capabilities_for(&identity, &ClipboardConfig::default());
+        assert_eq!(caps.level(Capability::GlobalHotkey), SupportLevel::Portal);
+        assert_eq!(caps.level(Capability::GnomeExtension), SupportLevel::Portal);
+    }
+
+    #[test]
+    fn x11_hotkey_is_native() {
+        let identity = PlatformIdentity {
+            platform: Platform::Linux,
+            session: SessionType::X11,
+            desktop: DesktopEnvironment::Unknown,
+            xdg_current_desktop: None,
+            xdg_session_type: Some("x11".into()),
+        };
+        let caps = capabilities_for(&identity, &ClipboardConfig::default());
+        assert_eq!(caps.level(Capability::GlobalHotkey), SupportLevel::Native);
     }
 }

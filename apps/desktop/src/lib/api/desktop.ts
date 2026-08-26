@@ -122,7 +122,29 @@ export async function closeWindow(): Promise<void> {
   if (!isTauriRuntime()) {
     return;
   }
-  return invoke<void>("cmd_close_window");
+  return invoke<void>("cmd_hide_picker");
+}
+
+export async function hidePicker(): Promise<void> {
+  return closeWindow();
+}
+
+export async function showPicker(): Promise<void> {
+  if (!isTauriRuntime()) {
+    return;
+  }
+  return invoke<void>("cmd_show_picker");
+}
+
+export async function onPickerActivated(handler: () => void): Promise<() => void> {
+  if (!isTauriRuntime()) {
+    return () => undefined;
+  }
+  const { listen } = await import("@tauri-apps/api/event");
+  const unlisten = await listen("picker-activated", () => {
+    handler();
+  });
+  return unlisten;
 }
 
 export async function searchEmoji(query: string, limit = 80): Promise<PickerItem[]> {

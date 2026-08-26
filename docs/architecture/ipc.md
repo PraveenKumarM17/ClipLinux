@@ -33,6 +33,9 @@ Protocol version: `clipl_protocol::PROTOCOL_VERSION` (currently `1`).
 | `SearchSymbols` / `ListSymbolCategory` | `PickerList` |
 | `SearchKaomoji` / `ListKaomojiCategory` | `PickerList` |
 | `FavoritePicker` / `UnfavoritePicker` / `GetFavoritePicker` | `PickerFavorite` / `PickerList` |
+| `ShowDesktop` / `HideDesktop` / `ToggleDesktop` | `DesktopRouted { delivered }` |
+| `SubscribeDesktop` | `DesktopSubscribed { replaced }` then `Event::ActivatePicker` on that connection |
+| `GetActivationStatus` | `Activation(ActivationReport)` |
 
 History replies are sanitized with `for_client`: hidden items keep their
 metadata but not the secret payload.
@@ -41,9 +44,13 @@ metadata but not the secret payload.
 insert a duplicate row for the echo (about 3 seconds). Hidden items cannot be
 copied.
 
-`DaemonStatus` contains paths, backend name, and monitoring level. It does **not** contain clipboard payloads.
+`DaemonStatus` contains paths, backend name, monitoring level, and an
+activation report. It does **not** contain clipboard payloads.
 
-One request per connection (CLI and desktop open a new socket per command).
+Ordinary commands still open one request per connection. The desktop keeps a
+**second** `SubscribeDesktop` connection open so the daemon can push
+`ActivatePicker` events. Only one subscriber is stored; a new desktop
+replaces the previous connection.
 
 ## PLANNED
 

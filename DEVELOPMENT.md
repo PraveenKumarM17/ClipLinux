@@ -55,6 +55,9 @@ cargo run -p clipl -- doctor --json
 cargo run -p clipl -- ping
 cargo run -p clipl -- status
 cargo run -p clipl -- status --json
+cargo run -p clipl -- open
+cargo run -p clipl -- toggle
+cargo run -p clipl -- hide
 cargo run -p clipl -- history --limit 20
 cargo run -p clipl -- history search "query"
 cargo run -p clipl -- history delete <id>
@@ -125,5 +128,6 @@ Never commit clipboard dumps.
 
 `tasks/000-foundation.md` and `tasks/001-clipboard-monitoring.md` are done.
 Phase 3A is the production desktop shell. Phase 3B is the offline emoji and
-symbols engine (`python3 packages/emoji-data/scripts/generate.py` regenerates
-the compact catalog).
+symbols engine. Phase 4A is capability-based activation (`clipl open` /
+GNOME extension / X11 `XGrabKey`). See
+[extensions/gnome/README.md](extensions/gnome/README.md).

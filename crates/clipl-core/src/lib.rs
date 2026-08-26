@@ -7,6 +7,7 @@
 
 #![forbid(unsafe_code)]
 
+pub mod activation;
 pub mod capabilities;
 pub mod clipboard;
 pub mod config;
@@ -22,9 +23,17 @@ pub mod snippet;
 pub mod timestamp;
 pub mod traits;
 
+pub use activation::{
+    ActivationBackendKind, ActivationBehavior, ActivationCapability, ActivationRequest,
+    ActivationSlotState, ActivationSnapshot, ActivationStatus, Shortcut, DEFAULT_SHORTCUT,
+    GNOME_EXTENSION_UUID,
+};
 pub use capabilities::{Capability, PlatformCapabilities, SupportLevel};
 pub use clipboard::{ClipboardContent, ClipboardItem, ClipboardSource, ContentRef};
-pub use config::{ClipLinuxConfig, ClipboardConfig, HistoryConfig, PrivacyConfig};
+pub use config::{
+    ActivationConfig, ActivationGnomeConfig, ActivationX11Config, ClipLinuxConfig, ClipboardConfig,
+    HistoryConfig, PrivacyConfig,
+};
 pub use emoji::{Emoji, SkinTone};
 pub use error::{Error, Result};
 pub use id::{ClipboardItemId, EmojiId, MediaItemId, PrivacyRuleId, SnippetId, StickerPackId};
@@ -35,8 +44,8 @@ pub use privacy::{PrivacyAction, PrivacyMatcher, PrivacyRule, SensitiveContentTy
 pub use snippet::Snippet;
 pub use timestamp::Timestamp;
 pub use traits::{
-    ClipboardBackend, ClipboardWatcher, MediaProvider, MediaQuery, PlatformAdapter,
-    StickerPackProvider, StorageBackend,
+    ActivationBackend, ClipboardBackend, ClipboardWatcher, MediaProvider, MediaQuery,
+    PlatformAdapter, StickerPackProvider, StorageBackend,
 };
 
 #[cfg(test)]

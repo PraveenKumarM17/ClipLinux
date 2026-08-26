@@ -76,6 +76,7 @@ share one shape:
 | `Emoji` | Glyph plus catalog metadata |
 | `Platform` / `SessionType` / `DesktopEnvironment` | Session identity |
 | `Capability` / `SupportLevel` / `PlatformCapabilities` | Honest feature matrix |
+| `ActivationCapability` / `Shortcut` / `ActivationRequest` | Per-session picker activation |
 | `PrivacyRule` / `SensitiveContentType` | Policy input |
 
 ## Traits
@@ -84,6 +85,7 @@ share one shape:
 | --- | --- |
 | `ClipboardBackend` | `MemoryClipboard`, X11 (text watch); Wayland/GNOME stubs |
 | `PlatformAdapter` | `LinuxGenericAdapter` / GNOME, KDE, wlroots, Hyprland, Sway |
+| `ActivationBackend` | X11 grab, GNOME Shell slot, KDE/Sway/Hyprland placeholders |
 | `MediaProvider` | `OfflineMediaProvider` / Tenor, Giphy, others |
 | `StickerPackProvider` | `EmptyStickerPackProvider` / local directory, community |
 | `StorageBackend` | `MemoryStorage`, `SqliteStore` |
@@ -103,7 +105,10 @@ in the daemon without leaking into core.
 
 Adapters must not set `Native` because “it worked on my machine”. Wayland
 clipboard watch, global hotkeys, and overlay popups are independent
-capabilities. See [PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md).
+capabilities. Global hotkeys are **not** one API: X11 may grab a chord;
+GNOME Wayland uses a Shell extension. See
+[PLATFORM_CAPABILITIES.md](PLATFORM_CAPABILITIES.md) and
+[docs/architecture/activation.md](docs/architecture/activation.md).
 
 ## Apps
 
@@ -127,12 +132,12 @@ watch, Unix-socket IPC. See [docs/architecture/daemon.md](docs/architecture/daem
 
 ### CLI (`apps/cli`)
 
-`clipl doctor` probes locally. `status`, `ping`, and `history` talk to the
-daemon over the Unix socket.
+`clipl doctor` probes locally. `status`, `ping`, `open` / `hide` / `toggle`,
+and `history` talk to the daemon over the Unix socket.
 
 ## Extensions and packages
 
-- `extensions/gnome` — Shell extension (placeholder)
+- `extensions/gnome` — Shell extension (activation shortcut → Unix IPC)
 - `extensions/kde` — Plasma integration (placeholder)
 - `packages/emoji-data` — catalog JSON
 - `packages/sticker-packs` — local packs

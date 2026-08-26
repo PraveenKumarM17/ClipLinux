@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+mod activation;
 mod picker;
 
 use std::fs;
@@ -14,18 +15,20 @@ use std::time::Duration;
 use clipl_clipboard::{content_hash, for_client, HistoryEngine, RecordOutcome, SqliteStore};
 use clipl_core::placeholders::MemoryClipboard;
 use clipl_core::{
-    paths, ClipLinuxConfig, ClipLinuxPaths, ClipboardBackend, ClipboardContent, ClipboardItem,
-    Error, PlatformAdapter, Result,
+    paths, ActivationRequest, ClipLinuxConfig, ClipLinuxPaths, ClipboardBackend, ClipboardContent,
+    ClipboardItem, Error, PlatformAdapter, Result,
 };
 use clipl_platform::{
-    capabilities_for, probe_identity_from_env, select_adapter, select_clipboard_backend,
-    AdapterKind, SelectedClipboard,
+    capabilities_for, probe_identity_from_env, select_activation_backend, select_adapter,
+    select_clipboard_backend, AdapterKind, SelectedClipboard,
 };
 use clipl_privacy::default_rules;
 use clipl_protocol::{
-    cleanup_stale_socket, read_frame, set_socket_mode, write_frame, DaemonStatus, Envelope,
-    Message, MonitoringStatus, Request, Response, PROTOCOL_VERSION,
+    cleanup_stale_socket, read_frame, set_socket_mode, write_frame, ActivationReport, DaemonStatus,
+    Envelope, Message, MonitoringStatus, Request, Response, PROTOCOL_VERSION,
 };
+
+use activation::DesktopHub;
 
 /// Load `config.toml` or defaults. Invalid files are errors.
 pub fn load_config() -> Result<ClipLinuxConfig> {
@@ -51,6 +54,7 @@ pub fn diagnostic_report_with(config: &ClipLinuxConfig, dirs: &ClipLinuxPaths) -
     let identity = probe_identity_from_env();
     let selected = select_clipboard_backend(&identity, &config.clipboard);
     let preferred = AdapterKind::preferred(&identity);
+    let activation = select_activation_backend(&identity, &config.activation);
     format!(
         "ClipLinux Daemon Diagnostic\n\
          \n\
@@ -64,7 +68,9 @@ pub fn diagnostic_report_with(config: &ClipLinuxConfig, dirs: &ClipLinuxPaths) -
          Socket: {}\n\
          Privacy engine: {}\n\
          History enabled: {}\n\
-         History limit: {}\n",
+         History limit: {}\n\
+         \n\
+         {}\n",
         identity.session,
         identity.desktop,
         preferred.as_str(),
@@ -81,6 +87,7 @@ pub fn diagnostic_report_with(config: &ClipLinuxConfig, dirs: &ClipLinuxPaths) -
         },
         config.history.enabled,
         config.history.max_items,
+        clipl_platform::format_activation_report(&identity, &activation, false),
     )
 }
 
@@ -102,13 +109,22 @@ pub struct DaemonState {
     dirs: ClipLinuxPaths,
     /// Hashes of items the desktop just copied; ingest skips one matching event.
     skip_copy: Mutex<Option<(String, std::time::Instant)>>,
+    hub: Arc<DesktopHub>,
+    activation: Mutex<ActivationReport>,
 }
 
 impl DaemonState {
     fn handle(&self, request: Request) -> Response {
         match request {
             Request::Ping => Response::Pong,
-            Request::GetStatus => Response::Status(self.status.clone()),
+            Request::GetStatus => Response::Status(self.status_with_activation()),
+            Request::GetActivationStatus => Response::Activation(self.activation_report()),
+            Request::ShowDesktop => self.route_desktop(ActivationRequest::ShowPicker),
+            Request::HideDesktop => self.route_desktop(ActivationRequest::HidePicker),
+            Request::ToggleDesktop => self.route_desktop(ActivationRequest::TogglePicker),
+            Request::SubscribeDesktop => Response::Error {
+                message: "SubscribeDesktop must use the dedicated connection path".into(),
+            },
             Request::GetCapabilities => {
                 let adapter = select_adapter();
                 Response::Capabilities(adapter.capabilities())
@@ -249,6 +265,28 @@ impl DaemonState {
             false
         }
     }
+
+    fn activation_report(&self) -> ActivationReport {
+        let mut report = self
+            .activation
+            .lock()
+            .map(|guard| guard.clone())
+            .unwrap_or_default();
+        report.desktop_connected = self.hub.connected();
+        report
+    }
+
+    fn status_with_activation(&self) -> DaemonStatus {
+        let mut status = self.status.clone();
+        status.activation = self.activation_report();
+        status
+    }
+
+    fn route_desktop(&self, action: ActivationRequest) -> Response {
+        Response::DesktopRouted {
+            delivered: self.hub.route(action),
+        }
+    }
 }
 
 /// Run the daemon until `shutdown` is set.
@@ -278,6 +316,36 @@ pub fn run_with_backend(
     let store = SqliteStore::open(&db_path)?;
     let engine = HistoryEngine::new(store, default_rules(), config.clone());
 
+    let mut activation_selected = select_activation_backend(&identity, &config.activation);
+    let mut activation_snapshot = activation_selected.snapshot.clone();
+    let pending_listen = if activation_selected.backend.supports_native_listen() {
+        match activation_selected.backend.arm() {
+            Ok(()) => {
+                activation_snapshot = activation_selected.backend.snapshot();
+                Some((
+                    activation_selected.backend,
+                    activation_selected.behavior.request(),
+                ))
+            }
+            Err(err) => {
+                tracing::warn!("native activation grab failed: {err}");
+                activation_snapshot.status = clipl_core::ActivationStatus::Error;
+                activation_snapshot.reason = err.to_string();
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    let activation_report = ActivationReport::from_snapshot(
+        identity.session,
+        identity.desktop.clone(),
+        &activation_snapshot,
+        false,
+    );
+    let hub = Arc::new(DesktopHub::default());
+
     let status = DaemonStatus {
         version: env!("CARGO_PKG_VERSION").into(),
         protocol_version: PROTOCOL_VERSION,
@@ -291,6 +359,7 @@ pub fn run_with_backend(
         privacy_enabled: config.privacy.enabled,
         history_enabled: config.history.enabled,
         history_limit: config.history.max_items,
+        activation: activation_report.clone(),
     };
 
     tracing::info!(
@@ -306,7 +375,37 @@ pub fn run_with_backend(
         shutdown: Arc::clone(&shutdown),
         dirs,
         skip_copy: Mutex::new(None),
+        hub: Arc::clone(&hub),
+        activation: Mutex::new(activation_report),
     });
+
+    let activation_thread = if let Some((mut backend, fire)) = pending_listen {
+        let stop = Arc::clone(&shutdown);
+        let hub_thread = Arc::clone(&hub);
+        tracing::info!(
+            shortcut = %activation_snapshot.shortcut,
+            "X11 activation grab armed"
+        );
+        Some(
+            thread::Builder::new()
+                .name("clipl-activation".into())
+                .spawn(move || {
+                    if let Err(err) = backend.listen(stop.as_ref(), &|| {
+                        hub_thread.route(fire);
+                    }) {
+                        tracing::warn!("activation listen ended: {err}");
+                    }
+                })
+                .map_err(|err| Error::Io(err.to_string()))?,
+        )
+    } else {
+        tracing::info!(
+            backend = %activation_snapshot.backend.as_str(),
+            status = %activation_snapshot.status.as_str(),
+            "native activation grab not started"
+        );
+        None
+    };
 
     let watch_thread = if selected.backend.supports_watch() {
         let watch_state = Arc::clone(&state);
@@ -328,6 +427,9 @@ pub fn run_with_backend(
 
     let result = serve_ipc(state);
     if let Some(handle) = watch_thread {
+        let _ = handle.join();
+    }
+    if let Some(handle) = activation_thread {
         let _ = handle.join();
     }
     result
@@ -429,10 +531,10 @@ fn serve_ipc(state: Arc<DaemonState>) -> Result<()> {
 
     while !state.shutdown.load(Ordering::SeqCst) {
         match listener.accept() {
-            Ok((mut stream, _)) => {
+            Ok((stream, _)) => {
                 let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
                 let _ = stream.set_write_timeout(Some(Duration::from_secs(5)));
-                if let Err(err) = handle_connection(&state, &mut stream) {
+                if let Err(err) = handle_connection(&state, stream) {
                     tracing::warn!("ipc client error: {err}");
                 }
             }
@@ -452,23 +554,43 @@ fn serve_ipc(state: Arc<DaemonState>) -> Result<()> {
 
 fn handle_connection(
     state: &DaemonState,
-    stream: &mut std::os::unix::net::UnixStream,
+    mut stream: std::os::unix::net::UnixStream,
 ) -> Result<()> {
-    let incoming = read_frame(&mut *stream)?;
+    let incoming = read_frame(&mut stream)?;
     let Envelope { id, payload } = incoming;
-    let response = match payload {
-        Message::Request(request) => state.handle(request),
-        _ => Response::Error {
-            message: "expected a request".into(),
-        },
-    };
-    write_frame(
-        &mut *stream,
-        &Envelope {
-            id,
-            payload: Message::Response(response),
-        },
-    )
+    match payload {
+        Message::Request(Request::SubscribeDesktop) => {
+            let replaced = state.hub.connected();
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    id,
+                    payload: Message::Response(Response::DesktopSubscribed { replaced }),
+                },
+            )?;
+            let _ = state.hub.subscribe(stream);
+            Ok(())
+        }
+        Message::Request(request) => {
+            let response = state.handle(request);
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    id,
+                    payload: Message::Response(response),
+                },
+            )
+        }
+        _ => write_frame(
+            &mut stream,
+            &Envelope {
+                id,
+                payload: Message::Response(Response::Error {
+                    message: "expected a request".into(),
+                }),
+            },
+        ),
+    }
 }
 
 /// Build a [`SelectedClipboard`] around a mock backend for tests.
@@ -510,6 +632,36 @@ mod tests {
         panic!("timed out waiting for expected history");
     }
 
+    fn test_config() -> ClipLinuxConfig {
+        ClipLinuxConfig {
+            activation: clipl_core::ActivationConfig {
+                enabled: false,
+                ..clipl_core::ActivationConfig::default()
+            },
+            ..ClipLinuxConfig::default()
+        }
+    }
+
+    fn wait_socket(sock: &std::path::Path) {
+        for _ in 0..100 {
+            if sock.exists() {
+                return;
+            }
+            thread::sleep(Duration::from_millis(20));
+        }
+        panic!("daemon socket was not created");
+    }
+
+    fn wayland_identity() -> clipl_core::PlatformIdentity {
+        clipl_core::PlatformIdentity {
+            platform: clipl_core::Platform::Linux,
+            session: clipl_core::SessionType::Wayland,
+            desktop: clipl_core::DesktopEnvironment::Gnome,
+            xdg_current_desktop: Some("GNOME".into()),
+            xdg_session_type: Some("wayland".into()),
+        }
+    }
+
     #[test]
     fn mock_backend_records_and_serves_history() {
         let tmp = tempfile::tempdir().unwrap();
@@ -518,27 +670,14 @@ mod tests {
         let producer = clipboard.clone();
         let shutdown = Arc::new(AtomicBool::new(false));
         let stop = Arc::clone(&shutdown);
-        let identity = probe_identity_from_env();
+        let identity = wayland_identity();
         let selected = mock_selection(clipboard);
         let dirs_thread = dirs.clone();
         let thread = thread::spawn(move || {
-            run_with_backend(
-                ClipLinuxConfig::default(),
-                identity,
-                selected,
-                dirs_thread,
-                stop,
-            )
-            .unwrap();
+            run_with_backend(test_config(), identity, selected, dirs_thread, stop).unwrap();
         });
         let sock = dirs.socket_file();
-        for _ in 0..100 {
-            if sock.exists() {
-                break;
-            }
-            thread::sleep(Duration::from_millis(20));
-        }
-        assert!(sock.exists(), "daemon socket was not created");
+        wait_socket(&sock);
         producer
             .write(&ClipboardItem::text("from-mock").content)
             .unwrap();
@@ -575,6 +714,102 @@ mod tests {
             Response::Error { message } => assert!(message.contains("unpin")),
             other => panic!("unexpected {other:?}"),
         }
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn toggle_without_desktop_is_not_delivered() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(
+                test_config(),
+                wayland_identity(),
+                mock_selection(MemoryClipboard::default()),
+                dirs_thread,
+                stop,
+            )
+            .unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::ToggleDesktop).unwrap() {
+            Response::DesktopRouted { delivered } => assert!(!delivered),
+            other => panic!("unexpected {other:?}"),
+        }
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn subscribe_then_toggle_delivers_event() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(
+                test_config(),
+                wayland_identity(),
+                mock_selection(MemoryClipboard::default()),
+                dirs_thread,
+                stop,
+            )
+            .unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let sock_sub = sock.clone();
+        let subscriber = thread::spawn(move || {
+            let mut sub = clipl_protocol::ActivationSubscriber::connect_path(&sock_sub).unwrap();
+            sub.recv().unwrap()
+        });
+        thread::sleep(Duration::from_millis(80));
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::ToggleDesktop).unwrap() {
+            Response::DesktopRouted { delivered } => assert!(delivered),
+            other => panic!("unexpected {other:?}"),
+        }
+        let action = subscriber.join().unwrap();
+        assert_eq!(action, ActivationRequest::TogglePicker);
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn second_subscribe_replaces_the_first() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(
+                test_config(),
+                wayland_identity(),
+                mock_selection(MemoryClipboard::default()),
+                dirs_thread,
+                stop,
+            )
+            .unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let first = clipl_protocol::ActivationSubscriber::connect_path(&sock).unwrap();
+        let mut second = clipl_protocol::ActivationSubscriber::connect_path(&sock).unwrap();
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::ShowDesktop).unwrap() {
+            Response::DesktopRouted { delivered } => assert!(delivered),
+            other => panic!("unexpected {other:?}"),
+        }
+        assert_eq!(second.recv().unwrap(), ActivationRequest::ShowPicker);
+        let _ = first;
         shutdown.store(true, Ordering::SeqCst);
         thread.join().unwrap();
     }

@@ -7,10 +7,10 @@ stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-**Current milestone:** full offline emoji + symbols picker (Phase 3B), plus the
-Phase 3A desktop history shell. Wayland clipboard monitoring is still
-**unsupported** until a compositor adapter or GNOME extension exists. Global
-hotkeys are not in this phase.
+**Current milestone:** capability-based picker activation (Phase 4A). X11
+registers Super+V (configurable) via `XGrabKey`. GNOME Wayland uses the
+Shell extension in `extensions/gnome`. Wayland clipboard monitoring is still
+**unsupported**. GIFs/stickers are not in this phase.
 
 ## Quick start
 
@@ -20,6 +20,9 @@ cargo run -p clipl-daemon -- --diagnose
 cargo run -p clipl-daemon          # start (Ctrl+C to stop)
 cargo run -p clipl -- doctor
 cargo run -p clipl -- status
+cargo run -p clipl -- open
+cargo run -p clipl -- toggle
+cargo run -p clipl -- hide
 cargo run -p clipl -- history --limit 20
 ```
 
@@ -56,13 +59,16 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 | [docs/architecture/desktop-daemon-boundary.md](docs/architecture/desktop-daemon-boundary.md) | Why the UI never opens SQLite |
 | [docs/architecture/emoji-engine.md](docs/architecture/emoji-engine.md) | Unicode 17.0 emoji search |
 | [docs/architecture/symbols-engine.md](docs/architecture/symbols-engine.md) | Curated symbols and kaomoji |
+| [docs/architecture/activation.md](docs/architecture/activation.md) | X11 grab, GNOME extension, CLI open/toggle |
+| [docs/platform-support/x11.md](docs/platform-support/x11.md) | X11 clipboard + native shortcut |
+| [docs/platform-support/gnome.md](docs/platform-support/gnome.md) | GNOME Wayland activation |
 
 ## Layout
 
 ```
 apps/          desktop (Tauri + Svelte), daemon, CLI
 crates/        Rust libraries; core has no UI toolkit dependency
-extensions/    GNOME and KDE integration (placeholders)
+extensions/    GNOME Shell activation extension; KDE placeholder
 packages/      emoji data, sticker packs, themes
 docs/          additional architecture notes
 ```
