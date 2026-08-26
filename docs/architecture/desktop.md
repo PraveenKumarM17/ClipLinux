@@ -12,6 +12,7 @@ dashboard. The process stays running when the window is hidden.
 apps/desktop/
   src/                 Svelte UI (history, emoji, symbols/kaomoji; snippets placeholder)
   src-tauri/           Rust host (IPC client + Tauri commands)
+  src-tauri/icons/     Window icons (`icon.png` is required by `generate_context!`)
   scripts/tauri.sh     Enables the `tauri-app` Cargo feature for WebView builds
 ```
 

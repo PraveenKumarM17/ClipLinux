@@ -26,11 +26,11 @@ tauri-app = ["dep:tauri", "dep:tauri-build", "dep:arboard"]
 clipl-core.workspace = true
 clipl-protocol.workspace = true
 serde.workspace = true
-tauri = { version = "2", optional = true }
+tauri = { version = "2", optional = true, features = [] }
 arboard = { version = "3", optional = true }
 
 [build-dependencies]
-tauri-build = { version = "2", optional = true }
+tauri-build = { version = "2", optional = true, features = [] }
 
 [dev-dependencies]
 tempfile.workspace = true

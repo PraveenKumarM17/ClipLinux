@@ -107,7 +107,7 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
 
     use clipl_core::paths;
     use clipl_protocol::ActivationSubscriber;
-    use tauri::{Emitter, Manager};
+    use tauri::Manager;
 
     tauri::Builder::default()
         .manage(PickerState {
