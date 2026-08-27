@@ -27,6 +27,8 @@ pub enum Capability {
     ImagePaste,
     /// Paste file URIs.
     FilePaste,
+    /// Insert the last picked text into the previously focused app (Ctrl+V).
+    InsertIntoApp,
     /// Use xdg-desktop-portal for clipboard or screenshots.
     PortalIntegration,
     /// GNOME Shell extension integration.
@@ -50,6 +52,7 @@ impl Capability {
             Self::OverlayPopup,
             Self::ImagePaste,
             Self::FilePaste,
+            Self::InsertIntoApp,
             Self::PortalIntegration,
             Self::GnomeExtension,
             Self::KdeIntegration,
@@ -68,6 +71,7 @@ impl Capability {
             Self::OverlayPopup => "overlay-popup",
             Self::ImagePaste => "image-paste",
             Self::FilePaste => "file-paste",
+            Self::InsertIntoApp => "insert-into-app",
             Self::PortalIntegration => "portal-integration",
             Self::GnomeExtension => "gnome-extension",
             Self::KdeIntegration => "kde-integration",

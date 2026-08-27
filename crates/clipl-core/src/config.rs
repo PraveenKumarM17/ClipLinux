@@ -21,6 +21,9 @@ pub struct ClipLinuxConfig {
     /// Picker activation (shortcuts / desktop integration).
     #[serde(default)]
     pub activation: ActivationConfig,
+    /// Insert picked text into the previously focused application.
+    #[serde(default)]
+    pub insert: InsertConfig,
 }
 
 impl ClipLinuxConfig {
@@ -236,6 +239,20 @@ pub struct ActivationGnomeConfig {
 }
 
 impl Default for ActivationGnomeConfig {
+    fn default() -> Self {
+        Self { enabled: true }
+    }
+}
+
+/// Insert picked text into the app that had focus before the palette opened.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct InsertConfig {
+    /// After a pick: restore that app and send Ctrl+V. Never types the payload.
+    #[serde(default = "default_true")]
+    pub enabled: bool,
+}
+
+impl Default for InsertConfig {
     fn default() -> Self {
         Self { enabled: true }
     }

@@ -21,13 +21,15 @@ The supported path is `extensions/gnome`:
 3. `clipl-daemon` notifies the subscribed desktop
 4. The picker window is shown or hidden
 
-See [extensions/gnome/README.md](../../extensions/gnome/README.md) for
-install steps.
+After a pick, the same extension restores the window that had focus when
+the shortcut fired and sends Ctrl+V (clipboard already written by the
+desktop). See [extensions/gnome/README.md](../../extensions/gnome/README.md).
 
 **GNOME Shell versions listed in `metadata.json` (46–50) use the ESM
-layout. None of them were runtime-tested in Phase 4A.** This development
-host reports GNOME Shell 50.1 on Wayland; `clipl doctor` correctly selects
-`gnome-shell` and does **not** take an X11 grab despite `DISPLAY=:0`.
+layout. None of them were runtime-tested for Super+V or insert.** This
+development host reports GNOME Shell 50 on Wayland; `clipl doctor` correctly
+selects `gnome-shell` and does **not** take an X11 grab despite `DISPLAY`
+being set.
 
 ## Super+V
 

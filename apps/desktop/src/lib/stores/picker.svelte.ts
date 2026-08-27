@@ -2,7 +2,7 @@ import type { PickerItem, PickerKind } from "../api/desktop";
 import * as api from "../api/desktop";
 import { debounce } from "../utils/debounce";
 import { moveGridIndex, type GridDir } from "../utils/grid";
-import { session, setNotice } from "./session.svelte";
+import { noticeFromInsert, session, setNotice } from "./session.svelte";
 
 export const SKIN_TONES = [
   { id: "default", label: "Default" },
@@ -131,10 +131,9 @@ export async function copyPickerSelected(glyphOverride?: string): Promise<void> 
   }
   const glyph = glyphOverride ?? item.glyph;
   try {
-    await api.copyPickerItem(currentKind(), glyph, item.base);
-    setNotice(`Copied ${glyph}`);
+    const result = await api.copyPickerItem(currentKind(), glyph, item.base);
+    noticeFromInsert(result, `Copied ${glyph}. Press Ctrl+V.`);
     picker.variantsOpen = false;
-    await api.hidePicker();
   } catch (err) {
     setNotice(err instanceof Error ? err.message : String(err));
   }

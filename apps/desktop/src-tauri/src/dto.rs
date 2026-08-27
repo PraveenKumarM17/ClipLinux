@@ -23,6 +23,15 @@ pub struct HistoryRow {
     pub source: String,
 }
 
+/// Result of writing the clipboard and attempting restore-focus + Ctrl+V.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct InsertOutcome {
+    /// True when a backend sent Ctrl+V into the previously focused app.
+    pub inserted: bool,
+    /// Safe-to-show explanation when not inserted. Empty on success.
+    pub reason: String,
+}
+
 impl HistoryRow {
     /// Map a protocol item (already sanitized by the daemon) into a UI row.
     pub fn from_item(item: &ClipboardItem) -> Self {

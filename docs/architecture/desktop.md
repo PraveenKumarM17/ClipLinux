@@ -1,6 +1,7 @@
 # Desktop application
 
-Status: **IMPLEMENTED** for Phase 3A/3B picker plus Phase 4A show/hide.
+Status: **IMPLEMENTED** for Phase 3A/3B picker plus Phase 4A show/hide and
+restore-focus insert (Ctrl+V).
 
 ClipLinux desktop (`clipl-desktop`, application id `io.clipl.ClipLinux`) is a
 compact Tauri v2 window with a Svelte 5 UI. It is a clipboard **picker**, not a
@@ -49,7 +50,7 @@ Keyboard (universal search and history browse):
 | --- | --- |
 | ↑ / Ctrl+K | Previous item |
 | ↓ / Ctrl+J | Next item |
-| Enter | Copy selected text to the OS clipboard |
+| Enter | Insert selected text into the app you were typing in (Ctrl+V). Copied either way. |
 | Escape | Clear search if non-empty; otherwise **hide** |
 | Ctrl+F | Focus search |
 | Delete | Confirm-delete selected **unpinned** item |
@@ -72,18 +73,24 @@ and the startup command (`cargo run -p clipl-daemon`) instead of an empty list.
 
 Reconnect uses exponential backoff (1s … 16s) and does not hammer the socket.
 
-## Copy and loop prevention
+## Copy, hide, then insert
 
 The webview never writes the OS clipboard and never opens SQLite.
 
-1. UI sends the item id to a Tauri command
-2. Host sends `CopyItem` to the daemon
-3. Daemon returns text (never for hidden/sensitive rows) and records a skip-hash
-4. Host writes the text with `arboard`
-5. If the watch thread sees that same hash within ~3s, it does not insert a row
+1. UI sends the item id (or glyph) to a Tauri command
+2. Host writes CLIPBOARD (GTK `Clipboard::store()` when available, else `arboard`)
+3. Host **hides** the picker so the next Ctrl+V cannot land in search
+4. Host sends `InsertIntoApp` to the daemon
+5. Daemon restores the window that had focus **when the shortcut fired** and sends **only** Ctrl+V
+6. If the watch thread sees the copy hash within ~3s, it does not insert a row
 
-On GNOME Wayland, `arboard` may fail. The UI surfaces the error. This phase
-does not inject keys into foreign windows.
+ClipLinux never types the payload as fake keys. If insert cannot be delivered
+(generic Wayland, `clipl open` with no shortcut snapshot, insert disabled),
+the text is still on the clipboard; press Ctrl+V yourself.
+
+On GNOME Wayland this needs the Shell extension's `SubscribeInsert` helper.
+GTK clipboard write is used because `arboard` often fails without
+`wlr-data-control`.
 
 ## Tests
 

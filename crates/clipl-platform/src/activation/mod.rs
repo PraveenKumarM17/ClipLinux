@@ -12,7 +12,8 @@ mod wlroots;
 mod x11;
 
 use std::path::{Path, PathBuf};
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, AtomicU32};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use clipl_core::{
@@ -56,6 +57,11 @@ pub trait NativeActivation: ActivationBackend + Send {
     fn listen(&mut self, shutdown: &AtomicBool, on_fire: &dyn Fn()) -> clipl_core::Result<()> {
         let _ = (shutdown, on_fire);
         Ok(())
+    }
+
+    /// Shared X11 focus snapshot written when the shortcut fires. Wayland backends return `None`.
+    fn focus_window_slot(&self) -> Option<Arc<AtomicU32>> {
+        None
     }
 }
 

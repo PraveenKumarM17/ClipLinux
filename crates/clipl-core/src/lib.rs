@@ -32,7 +32,7 @@ pub use capabilities::{Capability, PlatformCapabilities, SupportLevel};
 pub use clipboard::{ClipboardContent, ClipboardItem, ClipboardSource, ContentRef};
 pub use config::{
     ActivationConfig, ActivationGnomeConfig, ActivationX11Config, ClipLinuxConfig, ClipboardConfig,
-    HistoryConfig, PrivacyConfig,
+    HistoryConfig, InsertConfig, PrivacyConfig,
 };
 pub use emoji::{Emoji, SkinTone};
 pub use error::{Error, Result};

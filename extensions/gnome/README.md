@@ -1,18 +1,23 @@
 # ClipLinux GNOME Shell extension
 
-This extension is the **GNOME Wayland activation backend**. It does not
-monitor the clipboard, open SQLite, or inject keystrokes.
+This extension is the **GNOME Wayland activation and insert backend**. It does
+not monitor the clipboard or open SQLite. After a pick it may send **Ctrl+V**
+only — never the clipboard payload as typed keys.
 
 ```
 GNOME Shell shortcut
         ↓
-ClipLinux extension (this directory)
+ClipLinux extension remembers global.display.focus_window
         ↓
 Unix socket ToggleDesktop  ($XDG_RUNTIME_DIR/clipl/daemon.sock)
         ↓
 clipl-daemon
         ↓
 subscribed clipl-desktop shows the picker
+        ↓
+pick → desktop writes CLIPBOARD, hides, InsertIntoApp
+        ↓
+extension activates the saved window and sends Ctrl+V
 ```
 
 On GNOME Wayland, `clipl-daemon` **must not** call `XGrabKey`. The Shell
@@ -22,12 +27,14 @@ owns Super+V (default) through GSettings.
 
 - GNOME Shell **46–50** listed in `metadata.json` so the extension can load on
   current Ubuntu GNOME. The layout is ESM (GNOME 45+). **No Shell version was
-  runtime-tested in Phase 4A** (no live Super+V session test).
+  runtime-tested** for Super+V or insert (static review only).
 - `clipl-daemon` running in the same user session
 - `clipl-desktop` running (hidden is fine) so the daemon has a subscriber
+- This extension enabled so insert can restore the previous window
 
-This machine's GNOME Shell version was **not** used as a test target during
-Phase 4A unless noted in the engineering report.
+Re-copy the extension into
+`~/.local/share/gnome-shell/extensions/clipl@io.clipl` and log out/in on
+Wayland after updating.
 
 ## Install (user session)
 
@@ -58,16 +65,20 @@ list. Change either binding if they collide.
 gsettings set org.gnome.shell.extensions.clipl activate-shortcut "['<Super>period']"
 ```
 
-X11 sessions do **not** need this extension. `clipl-daemon` registers
-`XGrabKey` there when `[activation.x11] enabled = true`.
+X11 sessions do **not** need this extension for the shortcut (`XGrabKey`).
+They also do not need it for insert (daemon XTest). On GNOME Wayland this
+extension is required for both.
 
 ## Security
 
 - Local Unix socket only (`0600`)
-- The action is hardcoded `ToggleDesktop` — no user-controlled command string
-- No `GLib.spawn_*`, no `xdg-open` of arbitrary URLs, no clipboard access
+- Actions are hardcoded `ToggleDesktop` / `SubscribeInsert` / Ctrl+V — no
+  user-controlled command string
+- No `GLib.spawn_*`, no `xdg-open`, no `ydotool`, no typing of clipboard text
+- `SubscribeInsert` uses `read_bytes_async` so the Shell is not blocked
 - If `io.clipl.ClipLinux.desktop` is installed, the extension may call
   GNOME's `Shell.AppSystem.activate()` so Wayland focus is user-initiated
+- Windows whose `wm_class` contains `clipl` are never insert targets
 
 ## Ownership of the shortcut
 
@@ -76,7 +87,7 @@ X11 sessions do **not** need this extension. `clipl-daemon` registers
 | `config.toml` `[activation].shortcut` | ClipLinux (X11 grab + doctor text) |
 | GSettings `activate-shortcut` | This extension on GNOME |
 
-They are not automatically synchronized in Phase 4A. Document both.
+They are not automatically synchronized. Document both.
 
 ## Uninstall
 

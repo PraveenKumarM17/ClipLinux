@@ -64,11 +64,16 @@ fn gnome_extension_metadata_is_well_formed() {
 fn gnome_extension_does_not_spawn_shell() {
     let js = include_str!("../../extensions/gnome/extension.js");
     assert!(js.contains("ToggleDesktop"));
+    assert!(js.contains("SubscribeInsert"));
+    assert!(js.contains("InsertIntoApp"));
+    assert!(js.contains("create_virtual_device"));
+    assert!(js.contains("KEY_Control_L"));
     assert!(js.contains("addKeybinding"));
     assert!(js.contains("removeKeybinding"));
     assert!(!js.contains("spawn_command_line"));
     assert!(!js.contains("GLib.spawn"));
     assert!(!js.contains("xdg-open"));
+    assert!(!js.contains("ydotool"));
 }
 
 #[test]

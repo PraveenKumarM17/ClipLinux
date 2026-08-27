@@ -19,6 +19,7 @@ Statically validated. GNOME Shell Super+V was **not** runtime-tested.
 - [x] Curated symbols + kaomoji picker
 - [x] Capability-based activation (X11 `XGrabKey`, GNOME Shell extension)
 - [x] `clipl open` / `toggle` / `hide`
+- [x] Insert into the previous app (copy + hide + Ctrl+V; GNOME extension / X11)
 - [ ] KDE / Sway / Hyprland activation backends
 - [ ] Overlay popup positioning
 - [ ] Snippets catalogs in the UI
@@ -34,14 +35,17 @@ Snippets UI, then settings. Not GIFs, stickers, cloud sync, or packaging.
 **Shipped:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
 kaomoji, daemon IPC, keyboard navigation.
 
-**Does not ship:** auto-paste, GIF search, sticker store, packaging, snippets UI.
+**Does not ship:** typing the payload as fake keys, GIF search, sticker store, packaging, snippets UI.
 
 ## Milestone D — Activation & desktop adapters (Phase 4A complete)
 
 **Shipped in 4A (statically validated):** X11 native shortcut, GNOME Shell
 **activation** extension, desktop show/hide/toggle, CLI fallback.
 
-**Not runtime-tested:** live Super+V on GNOME Shell.
+**Shipped next (statically validated):** restore-focus insert (Ctrl+V only) on
+X11 and GNOME Wayland.
+
+**Not runtime-tested:** live Super+V on GNOME Shell, live insert into another app.
 
 **Does not ship:** KDE backend, Sway/Hyprland in-process grabs, generic Wayland
 global hotkeys, GNOME clipboard push.

@@ -18,9 +18,9 @@ use clipl_protocol::{Envelope, Message, Request, Response};
 
 pub use commands::{
     clear_history, copy_history_item, delete_history_item, get_daemon_status, get_history,
-    search_history, set_pinned,
+    insert_into_app, search_history, set_pinned,
 };
-pub use dto::{ConnectionView, HistoryRow};
+pub use dto::{ConnectionView, HistoryRow, InsertOutcome};
 pub use ipc::{DaemonClient, START_COMMAND};
 pub use picker::{
     copy_picker_item, list_emoji_category, list_picker_category, picker_favorites, search_emoji,
@@ -274,9 +274,15 @@ fn cmd_unpin_history_item(id: String) -> Result<bool, String> {
 
 #[cfg(feature = "tauri-app")]
 #[tauri::command]
-fn cmd_copy_history_item(id: String) -> Result<(), String> {
-    copy_history_item(&DaemonClient::from_env(), &clipboard::SystemClipboard, &id)
-        .map_err(|err| err.to_string())
+fn cmd_copy_history_item(
+    id: String,
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+) -> Result<InsertOutcome, String> {
+    copy_then_insert(&window, &app, || {
+        copy_history_item(&DaemonClient::from_env(), &clipboard::SystemClipboard, &id)
+            .map_err(|err| err.to_string())
+    })
 }
 
 #[cfg(feature = "tauri-app")]
@@ -383,15 +389,41 @@ fn cmd_set_skin_tone_pref(tone: String) -> Result<String, String> {
 
 #[cfg(feature = "tauri-app")]
 #[tauri::command]
-fn cmd_copy_picker_item(kind: PickerKind, glyph: String, base: String) -> Result<(), String> {
-    picker::copy_picker_item(
-        &DaemonClient::from_env(),
-        &clipboard::SystemClipboard,
-        kind,
-        &glyph,
-        &base,
-    )
-    .map_err(|err| err.to_string())
+fn cmd_copy_picker_item(
+    kind: PickerKind,
+    glyph: String,
+    base: String,
+    window: tauri::WebviewWindow,
+    app: tauri::AppHandle,
+) -> Result<InsertOutcome, String> {
+    copy_then_insert(&window, &app, || {
+        picker::copy_picker_item(
+            &DaemonClient::from_env(),
+            &clipboard::SystemClipboard,
+            kind,
+            &glyph,
+            &base,
+        )
+        .map_err(|err| err.to_string())
+    })
+}
+
+#[cfg(feature = "tauri-app")]
+fn copy_then_insert(
+    window: &tauri::WebviewWindow,
+    app: &tauri::AppHandle,
+    write: impl FnOnce() -> Result<(), String>,
+) -> Result<InsertOutcome, String> {
+    write()?;
+    set_picker_visible(window, app, false);
+    std::thread::sleep(std::time::Duration::from_millis(80));
+    match insert_into_app(&DaemonClient::from_env()) {
+        Ok(outcome) => Ok(outcome),
+        Err(_) => Ok(InsertOutcome {
+            inserted: false,
+            reason: "copied; press Ctrl+V in the other app".into(),
+        }),
+    }
 }
 
 #[cfg(test)]

@@ -4,7 +4,7 @@ use clipl_core::{ClipboardItemId, Result};
 use clipl_protocol::{Request, Response};
 
 use crate::clipboard::ClipboardWriter;
-use crate::dto::{ConnectionView, HistoryRow};
+use crate::dto::{ConnectionView, HistoryRow, InsertOutcome};
 use crate::ipc::{disconnected_message, DaemonClient, START_COMMAND};
 
 const HISTORY_LIMIT: u32 = 200;
@@ -123,6 +123,23 @@ pub fn copy_history_item(
     }
 }
 
+/// Ask the daemon to restore the previously focused app and send Ctrl+V.
+///
+/// The OS clipboard must already contain the picked text. The picker window
+/// must already be hidden so the chord does not land in search.
+pub fn insert_into_app(client: &DaemonClient) -> Result<InsertOutcome> {
+    match client.request(Request::InsertIntoApp)? {
+        Response::Inserted { delivered, reason } => Ok(InsertOutcome {
+            inserted: delivered,
+            reason,
+        }),
+        Response::Error { message } => Err(clipl_core::Error::Protocol(message)),
+        other => Err(clipl_core::Error::Protocol(format!(
+            "unexpected insert response: {other:?}"
+        ))),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -210,6 +227,23 @@ mod tests {
         };
         copy_history_item(&client, &sink, &id.to_string()).unwrap();
         assert_eq!(*sink.writes.lock().unwrap(), vec!["payload".to_string()]);
+    }
+
+    #[test]
+    fn insert_maps_response() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("i.sock");
+        serve_one(
+            &path,
+            Response::Inserted {
+                delivered: false,
+                reason: "copied; press Ctrl+V in the other app".into(),
+            },
+        );
+        let client = DaemonClient::with_socket(&path);
+        let outcome = insert_into_app(&client).unwrap();
+        assert!(!outcome.inserted);
+        assert!(outcome.reason.contains("Ctrl+V"));
     }
 
     fn dummy_status(protocol_version: u32) -> clipl_protocol::DaemonStatus {

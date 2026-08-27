@@ -18,6 +18,11 @@ export interface HistoryRow {
   source: string;
 }
 
+export interface InsertResult {
+  inserted: boolean;
+  reason: string;
+}
+
 export type PickerKind = "emoji" | "symbol" | "kaomoji";
 
 export interface PickerItem {
@@ -114,8 +119,8 @@ export async function unpinHistoryItem(id: string): Promise<boolean> {
   return invoke<boolean>("cmd_unpin_history_item", { id });
 }
 
-export async function copyHistoryItem(id: string): Promise<void> {
-  return invoke<void>("cmd_copy_history_item", { id });
+export async function copyHistoryItem(id: string): Promise<InsertResult> {
+  return invoke<InsertResult>("cmd_copy_history_item", { id });
 }
 
 export async function closeWindow(): Promise<void> {
@@ -187,6 +192,10 @@ export async function setSkinTonePref(tone: string): Promise<string> {
   return invoke<string>("cmd_set_skin_tone_pref", { tone });
 }
 
-export async function copyPickerItem(kind: PickerKind, glyph: string, base: string): Promise<void> {
-  return invoke<void>("cmd_copy_picker_item", { kind, glyph, base });
+export async function copyPickerItem(
+  kind: PickerKind,
+  glyph: string,
+  base: string,
+): Promise<InsertResult> {
+  return invoke<InsertResult>("cmd_copy_picker_item", { kind, glyph, base });
 }

@@ -1,5 +1,6 @@
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import Clutter from 'gi://Clutter';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
@@ -7,10 +8,15 @@ import Shell from 'gi://Shell';
 
 const SHORTCUT_KEY = 'activate-shortcut';
 const DESKTOP_ID = 'io.clipl.ClipLinux.desktop';
+const RECONNECT_MS = 2000;
+const PASTE_DELAY_MS = 80;
 
 export default class ClipLinuxExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
+        this._insertTarget = null;
+        this._insertConnection = null;
+        this._insertCancellable = new Gio.Cancellable();
         Main.wm.addKeybinding(
             SHORTCUT_KEY,
             this._settings,
@@ -18,18 +24,105 @@ export default class ClipLinuxExtension extends Extension {
             Shell.ActionMode.ALL,
             () => this._onShortcut(),
         );
+        this._runInsertSubscriber();
     }
 
     disable() {
         Main.wm.removeKeybinding(SHORTCUT_KEY);
+        if (this._insertCancellable) {
+            this._insertCancellable.cancel();
+            this._insertCancellable = null;
+        }
+        closeQuietly(this._insertConnection);
+        this._insertConnection = null;
+        this._insertTarget = null;
         this._settings = null;
     }
 
     _onShortcut() {
+        this._rememberFocus();
         const delivered = sendToggle(socketPath());
         tryActivateDesktopApp();
         if (!delivered)
             Main.notify('ClipLinux', 'clipl-daemon is not running. Start it, then press Super+V again.');
+    }
+
+    _rememberFocus() {
+        const focus = global.display.focus_window;
+        if (focus && !isClipLinuxWindow(focus))
+            this._insertTarget = focus;
+    }
+
+    _runInsertSubscriber() {
+        const cancellable = this._insertCancellable;
+        this._insertLoop(cancellable).catch(error => {
+            if (!cancellable || cancellable.is_cancelled())
+                return;
+            logError(error, 'ClipLinux insert subscriber stopped');
+        });
+    }
+
+    async _insertLoop(cancellable) {
+        while (cancellable && !cancellable.is_cancelled()) {
+            try {
+                await this._subscribeInsert(cancellable);
+            } catch (error) {
+                if (cancellable.is_cancelled())
+                    return;
+            const message = error && error.message ? String(error.message) : String(error);
+            if (!message.includes('socket is missing') && !message.includes('IPC ended'))
+                logError(error, 'ClipLinux SubscribeInsert reconnecting');
+            }
+            closeQuietly(this._insertConnection);
+            this._insertConnection = null;
+            if (cancellable.is_cancelled())
+                return;
+            await delayMs(RECONNECT_MS, cancellable);
+        }
+    }
+
+    async _subscribeInsert(cancellable) {
+        const path = socketPath();
+        const file = Gio.File.new_for_path(path);
+        if (!file.query_exists(null))
+            throw new Error('clipl-daemon socket is missing');
+
+        const client = new Gio.SocketClient();
+        const address = new Gio.UnixSocketAddress({path});
+        const connection = await connectAsync(client, address, cancellable);
+        this._insertConnection = connection;
+        const output = connection.get_output_stream();
+        const input = connection.get_input_stream();
+        writeFrame(output, {
+            id: GLib.uuid_string_random(),
+            payload: {Request: 'SubscribeInsert'},
+        });
+        await readFrameAsync(input, cancellable);
+        while (!cancellable.is_cancelled()) {
+            const envelope = await readFrameAsync(input, cancellable);
+            if (isInsertEvent(envelope))
+                this._restoreAndPaste();
+        }
+    }
+
+    _restoreAndPaste() {
+        const win = this._insertTarget;
+        if (!win || isClipLinuxWindow(win))
+            return;
+        try {
+            win.activate(global.get_current_time());
+        } catch (error) {
+            logError(error, 'ClipLinux could not restore the previous window');
+            return;
+        }
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, PASTE_DELAY_MS, () => {
+            try {
+                sendCtrlV();
+            } catch (error) {
+                logError(error, 'ClipLinux Ctrl+V insert failed');
+            }
+            return GLib.SOURCE_REMOVE;
+        });
     }
 }
 
@@ -62,13 +155,7 @@ function sendToggle(path) {
         return isDelivered(reply);
     } catch (error) {
         logError(error, 'ClipLinux ToggleDesktop failed');
-        if (connection) {
-            try {
-                connection.close(null);
-            } catch (_closeErr) {
-                // ignore
-            }
-        }
+        closeQuietly(connection);
         return false;
     }
 }
@@ -78,6 +165,38 @@ function isDelivered(reply) {
     if (payload && Object.prototype.hasOwnProperty.call(payload, 'DesktopRouted'))
         return Boolean(payload.DesktopRouted.delivered);
     return payload === 'DesktopRouted' ? false : Boolean(reply);
+}
+
+function isInsertEvent(envelope) {
+    return envelope?.payload?.Event === 'InsertIntoApp';
+}
+
+function isClipLinuxWindow(win) {
+    if (!win)
+        return true;
+    const bits = [];
+    try {
+        bits.push(win.get_wm_class() || '');
+    } catch (_error) {
+        // ignore
+    }
+    try {
+        bits.push(win.get_wm_class_instance() || '');
+    } catch (_error) {
+        // ignore
+    }
+    const label = bits.join(' ').toLowerCase();
+    return label.includes('clipl');
+}
+
+function sendCtrlV() {
+    const seat = Clutter.get_default_backend().get_default_seat();
+    const device = seat.create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+    const time = global.get_current_time() || Clutter.CURRENT_TIME;
+    device.notify_keyval(time, Clutter.KEY_Control_L, Clutter.KeyState.PRESSED);
+    device.notify_keyval(time, Clutter.KEY_v, Clutter.KeyState.PRESSED);
+    device.notify_keyval(time, Clutter.KEY_v, Clutter.KeyState.RELEASED);
+    device.notify_keyval(time, Clutter.KEY_Control_L, Clutter.KeyState.RELEASED);
 }
 
 function writeFrame(output, obj) {
@@ -110,6 +229,83 @@ function readExact(input, size) {
         offset += data.byteLength;
     }
     return out;
+}
+
+function readFrameAsync(input, cancellable) {
+    return readExactAsync(input, 4, cancellable).then(headerBytes => {
+        const length = new DataView(headerBytes.buffer).getUint32(0, true);
+        if (length > 8 * 1024 * 1024)
+            throw new Error('ClipLinux IPC frame too large');
+        return readExactAsync(input, length, cancellable);
+    }).then(body => JSON.parse(new TextDecoder().decode(body)));
+}
+
+function readExactAsync(input, size, cancellable) {
+    const out = new Uint8Array(size);
+    let offset = 0;
+
+    const readChunk = () => new Promise((resolve, reject) => {
+        if (cancellable && cancellable.is_cancelled()) {
+            reject(new Error('ClipLinux insert subscriber cancelled'));
+            return;
+        }
+        input.read_bytes_async(size - offset, GLib.PRIORITY_DEFAULT, cancellable, (stream, result) => {
+            try {
+                const chunk = stream.read_bytes_finish(result);
+                if (!chunk || chunk.get_size() === 0) {
+                    reject(new Error('ClipLinux IPC ended early'));
+                    return;
+                }
+                const data = new Uint8Array(chunk.get_data());
+                out.set(data, offset);
+                offset += data.byteLength;
+                resolve();
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+
+    const loop = () => {
+        if (offset >= size)
+            return Promise.resolve(out);
+        return readChunk().then(loop);
+    };
+    return loop();
+}
+
+function connectAsync(client, address, cancellable) {
+    return new Promise((resolve, reject) => {
+        client.connect_async(address, cancellable, (socketClient, result) => {
+            try {
+                resolve(socketClient.connect_finish(result));
+            } catch (error) {
+                reject(error);
+            }
+        });
+    });
+}
+
+function delayMs(ms, cancellable) {
+    return new Promise(resolve => {
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, ms, () => {
+            resolve();
+            return GLib.SOURCE_REMOVE;
+        });
+    }).then(() => {
+        if (cancellable && cancellable.is_cancelled())
+            throw new Error('ClipLinux insert subscriber cancelled');
+    });
+}
+
+function closeQuietly(connection) {
+    if (!connection)
+        return;
+    try {
+        connection.close(null);
+    } catch (_error) {
+        // ignore
+    }
 }
 
 function tryActivateDesktopApp() {

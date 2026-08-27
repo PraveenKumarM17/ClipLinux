@@ -104,7 +104,7 @@ pub enum Request {
         /// History item whose payload should be copied.
         item_id: ClipboardItemId,
     },
-    /// Ask the daemon to paste an item (not implemented in this phase).
+    /// Ask the daemon to paste an item (legacy; use InsertIntoApp after a clipboard write).
     Paste {
         /// History item to paste.
         item_id: ClipboardItemId,
@@ -207,6 +207,10 @@ pub enum Request {
     ToggleDesktop,
     /// Desktop process keeps this connection open to receive activation events.
     SubscribeDesktop,
+    /// GNOME Shell extension keeps this connection open to receive insert events.
+    SubscribeInsert,
+    /// Restore the previously focused app and send Ctrl+V (clipboard already written).
+    InsertIntoApp,
     /// Activation capability/status (no keystroke data).
     GetActivationStatus,
 }
@@ -275,6 +279,18 @@ pub enum Response {
     DesktopSubscribed {
         /// True when a previous subscriber was replaced.
         replaced: bool,
+    },
+    /// GNOME extension (or other insert helper) is subscribed.
+    InsertSubscribed {
+        /// True when a previous subscriber was replaced.
+        replaced: bool,
+    },
+    /// Whether restore-focus + Ctrl+V was delivered.
+    Inserted {
+        /// True when a backend actually sent the paste chord.
+        delivered: bool,
+        /// Safe-to-show explanation when not delivered.
+        reason: String,
     },
     /// Show/hide/toggle was accepted. `delivered` is false when no desktop is connected.
     DesktopRouted {
@@ -357,6 +373,8 @@ pub enum Event {
         /// Show, hide, or toggle.
         action: ActivationRequest,
     },
+    /// Ask the GNOME extension to restore the previous window and send Ctrl+V.
+    InsertIntoApp,
 }
 
 #[cfg(test)]
@@ -377,6 +395,10 @@ mod tests {
         let json = String::from_utf8(env.to_json_bytes().unwrap()).unwrap();
         assert!(json.contains("ToggleDesktop"));
         assert!(!json.contains("shell"));
+        assert!(!json.contains("InsertIntoApp"));
+        let insert = Envelope::new(Message::Request(Request::InsertIntoApp));
+        let insert_json = String::from_utf8(insert.to_json_bytes().unwrap()).unwrap();
+        assert!(insert_json.contains("InsertIntoApp"));
     }
 
     #[test]

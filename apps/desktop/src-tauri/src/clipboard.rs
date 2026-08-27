@@ -38,20 +38,33 @@ impl ClipboardWriter for NullClipboard {
     }
 }
 
-/// Host clipboard via `arboard` (X11 / wlroots data-control). GNOME Wayland
-/// may fail; the UI surfaces that error instead of injecting keys.
+/// Host clipboard. Prefer GTK so GNOME Wayland keeps the contents after hide.
 #[cfg(feature = "tauri-app")]
 pub struct SystemClipboard;
 
 #[cfg(feature = "tauri-app")]
 impl ClipboardWriter for SystemClipboard {
     fn write_text(&self, text: &str) -> Result<()> {
+        if write_gtk_clipboard(text) {
+            return Ok(());
+        }
         let mut clipboard = arboard::Clipboard::new()
             .map_err(|err| clipl_core::Error::Clipboard(err.to_string()))?;
         clipboard
             .set_text(text)
             .map_err(|err| clipl_core::Error::Clipboard(err.to_string()))
     }
+}
+
+#[cfg(feature = "tauri-app")]
+fn write_gtk_clipboard(text: &str) -> bool {
+    if !gtk::is_initialized() {
+        return false;
+    }
+    let clipboard = gtk::Clipboard::get(&gdk::SELECTION_CLIPBOARD);
+    clipboard.set_text(text);
+    clipboard.store();
+    true
 }
 
 #[cfg(test)]

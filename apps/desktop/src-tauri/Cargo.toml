@@ -20,7 +20,7 @@ path = "src/lib.rs"
 default = []
 # Production WebView. Requires WebKitGTK on Linux; excluded from default
 # `cargo test --workspace` so core crates stay buildable without a display stack.
-tauri-app = ["dep:tauri", "dep:tauri-build", "dep:arboard"]
+tauri-app = ["dep:tauri", "dep:tauri-build", "dep:arboard", "dep:gtk", "dep:gdk"]
 
 [dependencies]
 clipl-core.workspace = true
@@ -28,6 +28,8 @@ clipl-protocol.workspace = true
 serde.workspace = true
 tauri = { version = "2", optional = true, features = [] }
 arboard = { version = "3", optional = true }
+gtk = { version = "0.18", optional = true }
+gdk = { version = "0.18", optional = true }
 
 [build-dependencies]
 tauri-build = { version = "2", optional = true, features = [] }

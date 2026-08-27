@@ -57,6 +57,15 @@ export function setNotice(message: string | null): void {
   }
 }
 
+export function noticeFromInsert(result: api.InsertResult, copied: string): void {
+  if (result.inserted) {
+    setNotice("Inserted into the other app.");
+    return;
+  }
+  const reason = result.reason.trim();
+  setNotice(reason.length > 0 ? reason : copied);
+}
+
 async function loadHistory(): Promise<void> {
   if (session.connection.kind !== "connected") {
     return;
@@ -177,9 +186,8 @@ export async function copyHistoryRow(item: HistoryRow): Promise<void> {
     return;
   }
   try {
-    await api.copyHistoryItem(item.id);
-    setNotice("Copied to clipboard.");
-    await api.hidePicker();
+    const result = await api.copyHistoryItem(item.id);
+    noticeFromInsert(result, "Copied to clipboard. Press Ctrl+V.");
   } catch (err) {
     setNotice(err instanceof Error ? err.message : String(err));
   }

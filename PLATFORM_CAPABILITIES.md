@@ -23,11 +23,21 @@ The source of truth at runtime is `PlatformCapabilities` plus
 | X11 + XFixes | `x11` | **IMPLEMENTED** Native (text) | **IMPLEMENTED** Native (`XFixesSelectionNotify`) | CLIPBOARD by default; PRIMARY optional via config |
 | X11 connect fail | `x11-unavailable` | Unsupported | Unsupported | Diagnose prints the error |
 | Generic Wayland | `wayland-generic` | **UNSUPPORTED** | **UNSUPPORTED** | No portable protocol; does **not** poll `wl-paste` |
-| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Clipboard watch needs a **future** clipboard-bridge extension. `extensions/gnome` currently provides **activation only**. |
+| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Clipboard watch needs a **future** clipboard-bridge extension. `extensions/gnome` provides activation **and** restore-focus Ctrl+V insert. |
 | KDE / Hyprland / Sway / wlroots | slot only | **PLANNED** | **PLANNED** | Named adapters, not implemented |
 | Unknown session | `none` | Unknown | Unknown | Watch not started |
 
-Write/image paste: **PLANNED** (X11 write is not implemented in this phase).
+Write: the **desktop** process writes CLIPBOARD (GTK on GNOME, `arboard` fallback). Image paste remains unsupported.
+
+### Insert into the previous app (`insert-into-app`)
+
+| Session | Level | Mechanism | Runtime-tested? |
+| --- | --- | --- | --- |
+| X11 | Native | Snapshot focus on shortcut; after pick, `XSetInputFocus` + XTest **Ctrl+V** | No (needs a live X11 session) |
+| GNOME Wayland | Portal | Extension remembers `focus_window`; Clutter virtual keyboard **Ctrl+V** | No (statically reviewed) |
+| Generic Wayland | Unsupported | Copy only; press Ctrl+V yourself | Expected |
+
+Never types the payload. Never uses X11 APIs on Wayland. `clipl open` without a recent shortcut snapshot is copy-only.
 
 ### X11 PRIMARY vs CLIPBOARD
 
@@ -51,7 +61,7 @@ text to the daemon over the Unix socket — not key injection from the daemon.
 - `linux-generic` — XDG probe + capability fill
 - `x11` — XFixes backend
 - `wayland-generic` — honest stub
-- `gnome` — honest stub + extension boundary (activation implemented)
+- `gnome` — honest clipboard stub + extension boundary (activation + insert)
 
 ## Activation backend matrix (Phase 4A)
 

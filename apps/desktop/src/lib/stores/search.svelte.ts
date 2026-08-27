@@ -11,7 +11,7 @@ import {
   type UniversalHit,
 } from "../utils/searchHits";
 import { loadPicker } from "./picker.svelte";
-import { copyHistoryRow, reloadHistory, session, setNotice } from "./session.svelte";
+import { copyHistoryRow, noticeFromInsert, reloadHistory, session, setNotice } from "./session.svelte";
 
 export const universal = $state({
   hits: [] as UniversalHit[],
@@ -123,9 +123,8 @@ export async function copyUniversal(): Promise<void> {
     return;
   }
   try {
-    await api.copyPickerItem(hit.source, hit.item.glyph, hit.item.base);
-    setNotice(`Copied ${hit.item.glyph}`);
-    await api.hidePicker();
+    const result = await api.copyPickerItem(hit.source, hit.item.glyph, hit.item.base);
+    noticeFromInsert(result, `Copied ${hit.item.glyph}. Press Ctrl+V.`);
   } catch (err) {
     setNotice(err instanceof Error ? err.message : String(err));
   }

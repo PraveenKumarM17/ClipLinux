@@ -7,7 +7,7 @@ mod picker;
 
 use std::fs;
 use std::os::unix::net::UnixListener;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
@@ -19,8 +19,8 @@ use clipl_core::{
     ClipboardItem, Error, PlatformAdapter, Result,
 };
 use clipl_platform::{
-    capabilities_for, probe_identity_from_env, select_activation_backend, select_adapter,
-    select_clipboard_backend, AdapterKind, SelectedClipboard,
+    capabilities_for, probe_identity_from_env, restore_focus_and_ctrl_v, select_activation_backend,
+    select_adapter, select_clipboard_backend, AdapterKind, SelectedClipboard,
 };
 use clipl_privacy::default_rules;
 use clipl_protocol::{
@@ -28,7 +28,7 @@ use clipl_protocol::{
     Envelope, Message, MonitoringStatus, Request, Response, PROTOCOL_VERSION,
 };
 
-use activation::DesktopHub;
+use activation::{copy_only_reason, DesktopHub, InsertHub};
 
 /// Load `config.toml` or defaults. Invalid files are errors.
 pub fn load_config() -> Result<ClipLinuxConfig> {
@@ -110,6 +110,9 @@ pub struct DaemonState {
     /// Hashes of items the desktop just copied; ingest skips one matching event.
     skip_copy: Mutex<Option<(String, std::time::Instant)>>,
     hub: Arc<DesktopHub>,
+    insert_hub: Arc<InsertHub>,
+    insert_enabled: bool,
+    x11_focus: Option<Arc<AtomicU32>>,
     activation: Mutex<ActivationReport>,
 }
 
@@ -125,6 +128,10 @@ impl DaemonState {
             Request::SubscribeDesktop => Response::Error {
                 message: "SubscribeDesktop must use the dedicated connection path".into(),
             },
+            Request::SubscribeInsert => Response::Error {
+                message: "SubscribeInsert must use the dedicated connection path".into(),
+            },
+            Request::InsertIntoApp => self.insert_into_app(),
             Request::GetCapabilities => {
                 let adapter = select_adapter();
                 Response::Capabilities(adapter.capabilities())
@@ -287,6 +294,41 @@ impl DaemonState {
             delivered: self.hub.route(action),
         }
     }
+
+    fn insert_into_app(&self) -> Response {
+        if !self.insert_enabled {
+            return Response::Inserted {
+                delivered: false,
+                reason: "insert is disabled; copied to the clipboard".into(),
+            };
+        }
+        if self.insert_hub.route() {
+            return Response::Inserted {
+                delivered: true,
+                reason: String::new(),
+            };
+        }
+        if let Some(slot) = &self.x11_focus {
+            match restore_focus_and_ctrl_v(slot.load(Ordering::SeqCst)) {
+                Ok(()) => {
+                    return Response::Inserted {
+                        delivered: true,
+                        reason: String::new(),
+                    };
+                }
+                Err(_) => {
+                    return Response::Inserted {
+                        delivered: false,
+                        reason: copy_only_reason(),
+                    };
+                }
+            }
+        }
+        Response::Inserted {
+            delivered: false,
+            reason: copy_only_reason(),
+        }
+    }
 }
 
 /// Run the daemon until `shutdown` is set.
@@ -317,6 +359,8 @@ pub fn run_with_backend(
     let engine = HistoryEngine::new(store, default_rules(), config.clone());
 
     let mut activation_selected = select_activation_backend(&identity, &config.activation);
+    let x11_focus = activation_selected.backend.focus_window_slot();
+    let insert_enabled = config.insert.enabled;
     let mut activation_snapshot = activation_selected.snapshot.clone();
     let pending_listen = if activation_selected.backend.supports_native_listen() {
         match activation_selected.backend.arm() {
@@ -345,6 +389,7 @@ pub fn run_with_backend(
         false,
     );
     let hub = Arc::new(DesktopHub::default());
+    let insert_hub = Arc::new(InsertHub::default());
 
     let status = DaemonStatus {
         version: env!("CARGO_PKG_VERSION").into(),
@@ -376,6 +421,9 @@ pub fn run_with_backend(
         dirs,
         skip_copy: Mutex::new(None),
         hub: Arc::clone(&hub),
+        insert_hub: Arc::clone(&insert_hub),
+        insert_enabled,
+        x11_focus,
         activation: Mutex::new(activation_report),
     });
 
@@ -561,6 +609,8 @@ fn handle_connection(
     match payload {
         Message::Request(Request::SubscribeDesktop) => {
             let replaced = state.hub.connected();
+            let _ = stream.set_read_timeout(None);
+            let _ = stream.set_write_timeout(None);
             write_frame(
                 &mut stream,
                 &Envelope {
@@ -569,6 +619,20 @@ fn handle_connection(
                 },
             )?;
             let _ = state.hub.subscribe(stream);
+            Ok(())
+        }
+        Message::Request(Request::SubscribeInsert) => {
+            let replaced = state.insert_hub.connected();
+            let _ = stream.set_read_timeout(None);
+            let _ = stream.set_write_timeout(None);
+            write_frame(
+                &mut stream,
+                &Envelope {
+                    id,
+                    payload: Message::Response(Response::InsertSubscribed { replaced }),
+                },
+            )?;
+            let _ = state.insert_hub.subscribe(stream);
             Ok(())
         }
         Message::Request(request) => {
@@ -740,6 +804,37 @@ mod tests {
         let mut client = IpcClient::connect_path(&sock).unwrap();
         match client.request(Request::ToggleDesktop).unwrap() {
             Response::DesktopRouted { delivered } => assert!(!delivered),
+            other => panic!("unexpected {other:?}"),
+        }
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn insert_without_helper_is_copy_only() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(
+                test_config(),
+                wayland_identity(),
+                mock_selection(MemoryClipboard::default()),
+                dirs_thread,
+                stop,
+            )
+            .unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::InsertIntoApp).unwrap() {
+            Response::Inserted { delivered, reason } => {
+                assert!(!delivered);
+                assert!(reason.contains("Ctrl+V"));
+            }
             other => panic!("unexpected {other:?}"),
         }
         shutdown.store(true, Ordering::SeqCst);

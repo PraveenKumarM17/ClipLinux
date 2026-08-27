@@ -35,6 +35,8 @@ Protocol version: `clipl_protocol::PROTOCOL_VERSION` (currently `1`).
 | `FavoritePicker` / `UnfavoritePicker` / `GetFavoritePicker` | `PickerFavorite` / `PickerList` |
 | `ShowDesktop` / `HideDesktop` / `ToggleDesktop` | `DesktopRouted { delivered }` |
 | `SubscribeDesktop` | `DesktopSubscribed { replaced }` then `Event::ActivatePicker` on that connection |
+| `SubscribeInsert` | `InsertSubscribed { replaced }` then `Event::InsertIntoApp` on that connection |
+| `InsertIntoApp` | `Inserted { delivered, reason }` |
 | `GetActivationStatus` | `Activation(ActivationReport)` |
 
 History replies are sanitized with `for_client`: hidden items keep their
@@ -49,8 +51,14 @@ activation report. It does **not** contain clipboard payloads.
 
 Ordinary commands still open one request per connection. The desktop keeps a
 **second** `SubscribeDesktop` connection open so the daemon can push
-`ActivatePicker` events. Only one subscriber is stored; a new desktop
-replaces the previous connection.
+`ActivatePicker` events. The GNOME extension keeps a **third**
+`SubscribeInsert` connection open for restore-focus + Ctrl+V. Only one
+subscriber is stored per hub; a new connection replaces the previous one.
+
+`InsertIntoApp` does not include the clipboard payload. The desktop must
+already have written CLIPBOARD and hidden the picker. If no insert backend
+is available, `delivered` is false and `reason` tells the user to press
+Ctrl+V.
 
 ## PLANNED
 

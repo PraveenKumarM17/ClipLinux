@@ -4,7 +4,8 @@
 //! root window (that would receive every key). Events arrive solely because of
 //! the grab.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use x11rb::connection::Connection;
@@ -31,6 +32,7 @@ pub struct X11Activation {
     shortcut: Shortcut,
     grab: Option<X11Grab>,
     last_error: Option<String>,
+    last_focus: Arc<AtomicU32>,
 }
 
 impl X11Activation {
@@ -40,6 +42,7 @@ impl X11Activation {
             shortcut,
             grab: None,
             last_error: None,
+            last_focus: Arc::new(AtomicU32::new(0)),
         }
     }
 }
@@ -92,7 +95,7 @@ impl ActivationBackend for X11Activation {
 
 impl NativeActivation for X11Activation {
     fn arm(&mut self) -> Result<()> {
-        match X11Grab::register(&self.shortcut) {
+        match X11Grab::register(&self.shortcut, Arc::clone(&self.last_focus)) {
             Ok(grab) => {
                 self.grab = Some(grab);
                 self.last_error = None;
@@ -112,6 +115,10 @@ impl NativeActivation for X11Activation {
             .ok_or_else(|| Error::Activation("X11 shortcut was not armed".into()))?;
         grab.run(shutdown, on_fire)
     }
+
+    fn focus_window_slot(&self) -> Option<Arc<AtomicU32>> {
+        Some(Arc::clone(&self.last_focus))
+    }
 }
 
 struct X11Grab {
@@ -120,10 +127,11 @@ struct X11Grab {
     keycode: Keycode,
     base_mask: u16,
     grabbed_masks: Vec<u16>,
+    last_focus: Arc<AtomicU32>,
 }
 
 impl X11Grab {
-    fn register(shortcut: &Shortcut) -> Result<Self> {
+    fn register(shortcut: &Shortcut, last_focus: Arc<AtomicU32>) -> Result<Self> {
         let (conn, screen_num) = x11rb::connect(None)
             .map_err(|err| Error::Activation(format!("X11 connect failed: {err}")))?;
         let root = conn.setup().roots[screen_num].root;
@@ -163,6 +171,7 @@ impl X11Grab {
             keycode,
             base_mask,
             grabbed_masks,
+            last_focus,
         })
     }
 
@@ -183,6 +192,7 @@ impl X11Grab {
                         continue;
                     }
                     if should_fire(&mut last, Instant::now(), Duration::from_millis(250)) {
+                        crate::snapshot_input_focus(&self.conn, self.root, &self.last_focus);
                         on_fire();
                     }
                 }

@@ -4,6 +4,7 @@
 
 mod activation;
 mod clipboard;
+mod insert;
 
 use std::env;
 
@@ -19,14 +20,14 @@ pub use clipboard::{
     WaylandGenericClipboard,
 };
 
-#[cfg(feature = "x11")]
-pub use activation::X11Activation;
 pub use activation::{
     format_activation_report, gnome_extension_installed, gnome_extension_present_in,
     select_activation_backend, select_activation_backend_with, GenericWaylandActivation,
     GnomeActivation, HyprlandActivation, KdeActivation, NativeActivation, NullActivation,
     SelectedActivation, SwayActivation, WlrootsActivation,
 };
+#[cfg(feature = "x11")]
+pub use insert::{restore_focus_and_ctrl_v, snapshot_input_focus};
 
 /// Probe `XDG_*` variables. This is capability detection, not a protocol hack.
 pub fn probe_identity_from_env() -> PlatformIdentity {
@@ -102,27 +103,36 @@ pub fn capabilities_for(
     caps.set(Capability::LocalStorage, SupportLevel::Native);
     caps.set(Capability::Network, SupportLevel::Native);
     caps.set(Capability::ClipboardRead, selected.read);
-    caps.set(Capability::ClipboardWrite, SupportLevel::Unsupported);
     caps.set(Capability::ClipboardWatch, selected.watch);
     match identity.session {
         SessionType::X11 => {
+            caps.set(Capability::ClipboardWrite, SupportLevel::Native);
             caps.set(Capability::GlobalHotkey, SupportLevel::Native);
+            caps.set(Capability::InsertIntoApp, SupportLevel::Native);
         }
         SessionType::Wayland => match identity.desktop {
             DesktopEnvironment::Gnome => {
+                caps.set(Capability::ClipboardWrite, SupportLevel::Fallback);
                 caps.set(Capability::GlobalHotkey, SupportLevel::Portal);
+                caps.set(Capability::InsertIntoApp, SupportLevel::Portal);
             }
             DesktopEnvironment::Sway
             | DesktopEnvironment::Hyprland
             | DesktopEnvironment::WlrootsGeneric => {
+                caps.set(Capability::ClipboardWrite, SupportLevel::Unsupported);
                 caps.set(Capability::GlobalHotkey, SupportLevel::Fallback);
+                caps.set(Capability::InsertIntoApp, SupportLevel::Unsupported);
             }
             _ => {
+                caps.set(Capability::ClipboardWrite, SupportLevel::Unsupported);
                 caps.set(Capability::GlobalHotkey, SupportLevel::Unsupported);
+                caps.set(Capability::InsertIntoApp, SupportLevel::Unsupported);
             }
         },
         _ => {
+            caps.set(Capability::ClipboardWrite, SupportLevel::Unknown);
             caps.set(Capability::GlobalHotkey, SupportLevel::Unknown);
+            caps.set(Capability::InsertIntoApp, SupportLevel::Unknown);
         }
     }
     caps.set(Capability::OverlayPopup, SupportLevel::Unknown);
@@ -265,6 +275,10 @@ mod tests {
             caps.level(Capability::GlobalHotkey),
             SupportLevel::Unsupported
         );
+        assert_eq!(
+            caps.level(Capability::InsertIntoApp),
+            SupportLevel::Unsupported
+        );
     }
 
     #[test]
@@ -279,6 +293,7 @@ mod tests {
         let caps = capabilities_for(&identity, &ClipboardConfig::default());
         assert_eq!(caps.level(Capability::GlobalHotkey), SupportLevel::Portal);
         assert_eq!(caps.level(Capability::GnomeExtension), SupportLevel::Portal);
+        assert_eq!(caps.level(Capability::InsertIntoApp), SupportLevel::Portal);
     }
 
     #[test]
@@ -292,5 +307,6 @@ mod tests {
         };
         let caps = capabilities_for(&identity, &ClipboardConfig::default());
         assert_eq!(caps.level(Capability::GlobalHotkey), SupportLevel::Native);
+        assert_eq!(caps.level(Capability::InsertIntoApp), SupportLevel::Native);
     }
 }

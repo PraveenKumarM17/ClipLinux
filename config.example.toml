@@ -33,3 +33,8 @@ enabled = true
 [activation.gnome]
 # Use the GNOME Shell extension path. The extension owns the GSettings shortcut.
 enabled = true
+
+[insert]
+# After a pick, restore the app that had focus when the shortcut fired and send
+# Ctrl+V. Never types the clipboard payload as keystrokes. Disable to copy only.
+enabled = true
