@@ -24,8 +24,9 @@ pub use commands::{
 pub use dto::{ConnectionView, HistoryRow, InsertOutcome};
 pub use ipc::{disconnected_message, DaemonClient};
 pub use launch::{
-    ensure_daemon_running, gnome_enabled_extensions_with_uuid, gnome_extension_on_disk,
-    install_user_gnome_extension, start_command, try_enable_user_gnome_extension, DAEMON_ON_PATH,
+    daemon_binary_for_exe, ensure_daemon_running, gnome_enabled_extensions_with_uuid,
+    gnome_extension_on_disk, install_user_gnome_extension, persistent_daemon_bin,
+    running_from_appimage, start_command, try_enable_user_gnome_extension, DAEMON_ON_PATH,
     GNOME_EXTENSION_UUID,
 };
 pub use picker::{

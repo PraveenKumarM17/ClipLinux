@@ -68,7 +68,11 @@ extensions do not need to be disabled first; if copies still do not appear,
 `gnome-extensions info clipl@io.clipl` should show the ClipLinux extension as
 enabled in this session.
 
-Release tags `v*.*.*` build those artifacts in GitHub Actions. Details:
+Release tags `v*.*.*` (and manual workflow dispatch) build artifacts on
+**Ubuntu 24.04** in GitHub Actions. A locally built **AppImage** from Ubuntu
+26.04 is not a release candidate (bundled WebKit needs glibc 2.43). The
+local `.deb` uses system libraries and installed on 24.04 in a container
+test. Details:
 [packaging/linux/README.md](packaging/linux/README.md).
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.

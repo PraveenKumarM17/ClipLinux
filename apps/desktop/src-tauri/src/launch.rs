@@ -3,6 +3,8 @@
 
 use std::fs;
 use std::io;
+use std::os::unix::fs::PermissionsExt;
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::thread;
@@ -36,13 +38,88 @@ pub fn sidecar_next_to_exe(exe: &Path) -> Option<PathBuf> {
     candidate.is_file().then_some(candidate)
 }
 
-/// Spawn `clipl-daemon` detached from this process's stdio.
+/// True when this process is running from an AppImage (FUSE mount or env).
+pub fn running_from_appimage(exe: &Path) -> bool {
+    std::env::var_os("APPIMAGE").is_some()
+        || std::env::var_os("APPDIR").is_some()
+        || exe_on_appimage_mount(exe)
+}
+
+/// True when `exe` lives on an AppImage FUSE mount (`/tmp/.mount_*`).
+pub fn exe_on_appimage_mount(exe: &Path) -> bool {
+    exe.components()
+        .any(|c| c.as_os_str().to_string_lossy().starts_with(".mount_"))
+}
+
+/// `$XDG_DATA_HOME/clipl/bin/clipl-daemon` — survives AppImage unmount.
+pub fn persistent_daemon_bin() -> PathBuf {
+    persistent_daemon_bin_in(&paths::data_dir())
+}
+
+/// `data_dir/bin/clipl-daemon`.
+pub fn persistent_daemon_bin_in(data_dir: &Path) -> PathBuf {
+    data_dir.join("bin").join(DAEMON_SIDECAR)
+}
+
+/// Copy `bundled` to `dest` when missing or stale. `dest` is left executable.
+pub fn sync_persistent_daemon_to(bundled: &Path, dest: &Path) -> io::Result<PathBuf> {
+    if let Some(parent) = dest.parent() {
+        fs::create_dir_all(parent)?;
+        let _ = fs::set_permissions(parent, fs::Permissions::from_mode(0o700));
+    }
+    if !daemon_copy_needed(bundled, dest)? {
+        return Ok(dest.to_path_buf());
+    }
+    let tmp = dest.with_extension("new");
+    fs::copy(bundled, &tmp)?;
+    fs::set_permissions(&tmp, fs::Permissions::from_mode(0o755))?;
+    fs::rename(&tmp, dest)?;
+    Ok(dest.to_path_buf())
+}
+
+fn daemon_copy_needed(bundled: &Path, dest: &Path) -> io::Result<bool> {
+    let Ok(dest_meta) = fs::metadata(dest) else {
+        return Ok(true);
+    };
+    let src_meta = fs::metadata(bundled)?;
+    if src_meta.len() != dest_meta.len() {
+        return Ok(true);
+    }
+    match (src_meta.modified(), dest_meta.modified()) {
+        (Ok(src), Ok(dst)) => Ok(src > dst),
+        _ => Ok(false),
+    }
+}
+
+/// Sidecar on disk, AppImage copy under the user data dir, or PATH.
+pub fn daemon_binary_for_exe(exe: &Path) -> PathBuf {
+    match sidecar_next_to_exe(exe) {
+        Some(sidecar) if running_from_appimage(exe) => {
+            let dest = persistent_daemon_bin();
+            match sync_persistent_daemon_to(&sidecar, &dest) {
+                Ok(path) => path,
+                Err(err) => {
+                    eprintln!(
+                        "clipl-desktop: could not extract clipl-daemon to {}: {err}",
+                        dest.display()
+                    );
+                    sidecar
+                }
+            }
+        }
+        Some(sidecar) => sidecar,
+        None => PathBuf::from(DAEMON_ON_PATH),
+    }
+}
+
+/// Spawn `clipl-daemon` detached from this process's stdio and process group.
 pub fn spawn_daemon(bin: &Path) -> io::Result<()> {
-    Command::new(bin)
-        .stdin(Stdio::null())
+    let mut cmd = Command::new(bin);
+    cmd.stdin(Stdio::null())
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()?;
+        .stderr(Stdio::null());
+    cmd.process_group(0);
+    cmd.spawn()?;
     Ok(())
 }
 
@@ -66,7 +143,7 @@ pub fn ensure_daemon_running(exe: &Path) -> bool {
     if IpcClient::connect_path(&socket).is_ok() {
         return true;
     }
-    let bin = sidecar_next_to_exe(exe).unwrap_or_else(|| PathBuf::from(DAEMON_ON_PATH));
+    let bin = daemon_binary_for_exe(exe);
     if let Err(err) = spawn_daemon(&bin) {
         eprintln!(
             "clipl-desktop: could not start clipl-daemon from {}: {err}",
@@ -256,5 +333,39 @@ mod tests {
             GNOME_EXTENSION_UUID
         )
         .is_none());
+    }
+
+    #[test]
+    fn detects_appimage_mount_in_exe_path() {
+        let mount = Path::new("/tmp/.mount_ClipLinABC/usr/bin/clipl-desktop");
+        assert!(exe_on_appimage_mount(mount));
+        let deb = Path::new("/usr/bin/clipl-desktop");
+        assert!(!exe_on_appimage_mount(deb));
+    }
+
+    #[test]
+    fn copies_daemon_into_persistent_bin() {
+        let tmp = tempfile::tempdir().unwrap();
+        let bundled = tmp.path().join("bundled");
+        fs::write(&bundled, b"daemon-v1").unwrap();
+        let dest = persistent_daemon_bin_in(&tmp.path().join("data"));
+        let first = sync_persistent_daemon_to(&bundled, &dest).unwrap();
+        assert_eq!(first, dest);
+        assert_eq!(fs::read(&dest).unwrap(), b"daemon-v1");
+        let mode = fs::metadata(&dest).unwrap().permissions().mode();
+        assert_eq!(mode & 0o111, 0o111);
+        fs::write(&bundled, b"daemon-v2-longer").unwrap();
+        sync_persistent_daemon_to(&bundled, &dest).unwrap();
+        assert_eq!(fs::read(&dest).unwrap(), b"daemon-v2-longer");
+    }
+
+    #[test]
+    fn deb_layout_uses_sidecar_not_data_dir() {
+        let tmp = tempfile::tempdir().unwrap();
+        let exe = tmp.path().join("clipl-desktop");
+        fs::write(&exe, []).unwrap();
+        fs::write(tmp.path().join(DAEMON_SIDECAR), b"from-deb").unwrap();
+        let bin = daemon_binary_for_exe(&exe);
+        assert_eq!(bin, tmp.path().join(DAEMON_SIDECAR));
     }
 }

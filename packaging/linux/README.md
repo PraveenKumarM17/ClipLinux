@@ -14,9 +14,18 @@ Tauri bundles: `.deb`, `.rpm`, and AppImage.
 
 The picker still never opens SQLite. The daemon remains the source of truth.
 
-AppImage is portable: it does **not** install XDG autostart or the system
-GNOME extension. Launching it starts the daemon if needed and copies the
-extension into the user data dir.
+**glibc, measured on the Ubuntu 26.04 build host**
+
+| Artifact | Uses host libc? | Highest `GLIBC_*` in *our* binaries | 24.04 (glibc 2.39) |
+| --- | --- | --- | --- |
+| `.deb` / `.rpm` | Yes (system WebKit/GTK) | `clipl-desktop` **2.39**; daemon/CLI **2.34** | `apt install` of a 26.04-built `.deb` succeeded on `ubuntu:24.04`; daemon started |
+| AppImage | Yes — **does not bundle `libc.so.6`** | same as above for `usr/bin/*` | **Not a 24.04 candidate.** Bundled `libglib-2.0` / `libwebkit2gtk-4.1` from 26.04 require **GLIBC_2.43** (`version 'GLIBC_2.43' not found` on 24.04) |
+
+CI (`runs-on: ubuntu-24.04`) produces AppImages whose bundled GTK stack is linked against glibc 2.39. Use those AppImages as release candidates, not `target/release/bundle/` from this host.
+
+AppImage does **not** install system XDG autostart. On first launch it copies
+`clipl-daemon` to `$XDG_DATA_HOME/clipl/bin/clipl-daemon` and starts that
+copy, so capture can outlive the FUSE mount.
 
 `.deb` / `.rpm` do **not** run `gnome-extensions enable` as root. The picker,
 once started as your user, appends `clipl@io.clipl` to GNOME's enabled
@@ -38,8 +47,10 @@ loaded `clipl@io.clipl`. Check with `gnome-extensions info clipl@io.clipl`.
 Other clipboard extensions (including Clipboard Indicator) can watch the same
 copy event; they do not block ClipLinux by occupying a signal.
 
-Packages built on Ubuntu 26.04 need glibc 2.43 and will not install on
-24.04. GitHub Actions builds on Ubuntu 24.04 for wider `.deb` compatibility.
+Packages built on Ubuntu 26.04: the `.deb`/`.rpm` binaries need at most
+glibc 2.39 (24.04-compatible). The **local AppImage** bundles 26.04 WebKit
+and needs glibc 2.43. Treat CI `ubuntu-24.04` AppImages as the AppImage
+release candidates.
 
 ## Build locally
 
