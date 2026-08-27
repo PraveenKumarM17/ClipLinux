@@ -116,8 +116,7 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
         })
         .setup(|app| {
             if let Some(window) = app.get_webview_window("palette") {
-                let _ = window.set_skip_taskbar(true);
-                let _ = window.hide();
+                style_palette_window(&window);
             }
             let handle = app.handle().clone();
             thread::spawn(move || loop {
@@ -181,6 +180,20 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
 struct PickerState {
     visibility: Mutex<PickerVisibility>,
     shown_at: Mutex<Option<std::time::Instant>>,
+}
+
+#[cfg(feature = "tauri-app")]
+fn style_palette_window(window: &tauri::WebviewWindow) {
+    let _ = window.set_minimizable(false);
+    let _ = window.set_maximizable(false);
+    let _ = window.set_skip_taskbar(true);
+    if let Ok(gtk_win) = window.gtk_window() {
+        use gtk::prelude::GtkWindowExt;
+        gtk_win.set_decorated(false);
+        gtk_win.set_skip_taskbar_hint(true);
+        gtk_win.set_type_hint(gdk::WindowTypeHint::Dialog);
+    }
+    let _ = window.hide();
 }
 
 #[cfg(feature = "tauri-app")]

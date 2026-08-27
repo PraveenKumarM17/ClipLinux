@@ -74,7 +74,7 @@ If the extension directory exists, status is `ConfiguredExternally`.
 | Process | Role |
 | --- | --- |
 | `clipl-daemon` | Persistent. IPC, history, optional X11 grab. Does not spawn the desktop. |
-| `clipl-desktop` | Persistent WebView. Escape and the window close button **hide** the window. The process stays alive. |
+| `clipl-desktop` | Persistent WebView. Escape, the in-window close button, and click-outside **hide** the window. The process stays alive. |
 | GNOME extension | Optional. Registers the Shell shortcut. Sends `ToggleDesktop`. Remembers the focused window and, after a pick, restores it and sends Ctrl+V. |
 
 The daemon does not launch the desktop. The extension does not launch a

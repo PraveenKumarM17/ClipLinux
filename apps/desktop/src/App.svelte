@@ -267,11 +267,16 @@
 <svelte:window onkeydown={onKeydown} />
 
 <main class="shell">
-  <header>
+  <header data-tauri-drag-region="deep">
     <div class="brand">
       <h1>ClipLinux</h1>
       <StatusIndicator connection={session.connection} />
     </div>
+    <button type="button" class="close" aria-label="Close" title="Close" onclick={() => void closeApp()}>
+      <svg viewBox="0 0 16 16" aria-hidden="true">
+        <path d="M3.2 3.2l9.6 9.6M12.8 3.2L3.2 12.8" />
+      </svg>
+    </button>
   </header>
 
   <SearchBar value={session.query} placeholder={searchPlaceholder} onQuery={onQuery} />
@@ -416,17 +421,53 @@
     position: relative;
   }
 
+  header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
   header .brand {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    flex: 1;
+    min-width: 0;
   }
 
   h1 {
     margin: 0;
     font-size: 1.05rem;
     letter-spacing: -0.02em;
+  }
+
+  .close {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--field);
+    color: var(--fg);
+    padding: 0;
+    cursor: pointer;
+  }
+
+  .close:hover {
+    background: var(--selected);
+  }
+
+  .close svg {
+    width: 12px;
+    height: 12px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
   }
 
   .pane {

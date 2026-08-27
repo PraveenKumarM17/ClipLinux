@@ -27,8 +27,9 @@ needs WebKitGTK on the host.
 
 - About 440×560, resizable, minimum 360×420
 - Centered, always on top, **not** in the taskbar / app switcher
+- No system minimize / maximize / hide chrome (undecorated palette)
 - Starts **hidden**; Super+Alt+V (or `clipl toggle`) shows it
-- Escape, the close button, and clicking another window **hide** it (the process stays running)
+- Escape, the in-window close button, Alt+F4, and clicking another window **hide** it (the process stays running)
 - Overlay positioning relative to the focused window is still later
 
 On startup the host connects to `clipl-daemon`, fetches status and recent
