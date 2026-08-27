@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ClipLinux
+Comment=Clipboard, emoji, and symbols picker
+Exec=clipl-desktop
+TryExec=clipl-desktop
+Icon=io.clipl.ClipLinux
+Terminal=false
+StartupNotify=false
+Categories=Utility;
+Keywords=clipboard;emoji;paste;picker;
+StartupWMClass=clipl-desktop
+DBusActivatable=false
+X-GNOME-UsesNotifications=false

@@ -77,11 +77,23 @@ fn gnome_extension_does_not_spawn_shell() {
 }
 
 #[test]
+fn linux_desktop_file_is_well_formed() {
+    let desktop = include_str!("../../packaging/linux/io.clipl.ClipLinux.desktop");
+    assert!(desktop.contains("Name=ClipLinux"));
+    assert!(desktop.contains("Exec=clipl-desktop"));
+    assert!(desktop.contains("io.clipl.ClipLinux"));
+    assert!(!desktop.contains("xdg-open"));
+}
+
+#[test]
 fn gnome_schema_declares_shortcut() {
     let xml =
         include_str!("../../extensions/gnome/schemas/org.gnome.shell.extensions.clipl.gschema.xml");
     assert!(xml.contains("activate-shortcut"));
-    assert!(xml.contains("&lt;Super&gt;v") || xml.contains("<![CDATA[['<Super>v']]]>"));
+    assert!(
+        xml.contains("&lt;Super&gt;&lt;Alt&gt;v")
+            || xml.contains("<![CDATA[['<Super><Alt>v']]]>")
+    );
 }
 
 #[test]

@@ -104,7 +104,8 @@ enabled = true
 **Ownership:** X11 reads `activation.shortcut` from `config.toml`. GNOME
 reads `org.gnome.shell.extensions.clipl activate-shortcut`. They are not
 synced automatically. Super+V may conflict with the window manager
-(including GNOME's notification list).
+(including GNOME's notification list). The GNOME extension therefore
+defaults to Super+Alt+V.
 
 Bare keys (`v`) are rejected so ClipLinux never grabs typing keys.
 

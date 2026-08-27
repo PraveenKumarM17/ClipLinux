@@ -9,10 +9,10 @@ emoji picker.
 
 **Latest completed milestone:** capability-based picker activation (Phase 4A).
 X11 registers Super+V (configurable) via `XGrabKey`. GNOME Wayland uses the
-Shell extension in `extensions/gnome`. That extension is **statically
-validated**, not GNOME-runtime-tested. Wayland clipboard monitoring is still
-**unsupported**. GIFs, stickers, snippets UI, cloud sync, and packaging are
-not implemented.
+Shell extension in `extensions/gnome` (default Super+Alt+V; Super+V is
+GNOME's notification list). That extension is **statically validated**, not
+GNOME-runtime-tested. Wayland clipboard monitoring is still **unsupported**.
+GIFs, stickers, snippets UI, cloud sync, and packaging are not implemented.
 
 ## Quick start
 

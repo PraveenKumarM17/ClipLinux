@@ -73,8 +73,9 @@ text to the daemon over the Unix socket — not key injection from the daemon.
 | Sway / Hyprland | compositor bind | user config → `clipl toggle` | **UNSUPPORTED** in-process (correct mechanism is compositor config) |
 | Generic Wayland | `wayland-generic` | — | **UNSUPPORTED** |
 
-`clipl doctor` and `clipl status` print an Activation block. Super+V is the
-default and **may conflict** with the desktop (GNOME notifications, WM binds).
+`clipl doctor` and `clipl status` print an Activation block. X11 defaults to
+Super+V. GNOME Wayland defaults to Super+Alt+V because Super+V is the
+notification list on Ubuntu GNOME.
 
 See [docs/architecture/activation.md](docs/architecture/activation.md).
 

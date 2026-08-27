@@ -26,15 +26,21 @@ the shortcut fired and sends Ctrl+V (clipboard already written by the
 desktop). See [extensions/gnome/README.md](../../extensions/gnome/README.md).
 
 **GNOME Shell versions listed in `metadata.json` (46–50) use the ESM
-layout. None of them were runtime-tested for Super+V or insert.** This
+layout. None of them were runtime-tested for Super+Alt+V or insert.** This
 development host reports GNOME Shell 50 on Wayland; `clipl doctor` correctly
 selects `gnome-shell` and does **not** take an X11 grab despite `DISPLAY`
 being set.
 
-## Super+V
+## Super+Alt+V
 
-Default ClipLinux shortcut is Super+V. GNOME may already use Super+V for
-notifications. Change one of the bindings if they collide.
+The GNOME extension default is Super+Alt+V. Ubuntu GNOME already binds
+Super+V to the notification list (`toggle-message-tray`). Super+Period is
+the emoji panel.
+
+A custom GNOME shortcut that runs `clipl toggle` is also supported (see
+[extensions/gnome/README.md](../../extensions/gnome/README.md)) and works
+before a session restart. It does **not** snapshot the focused window;
+the Shell extension still does that for insert.
 
 X11 GNOME sessions prefer the daemon `XGrabKey` path when
 `[activation.x11] enabled = true`. The extension is not required there.

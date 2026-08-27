@@ -21,13 +21,14 @@ extension activates the saved window and sends Ctrl+V
 ```
 
 On GNOME Wayland, `clipl-daemon` **must not** call `XGrabKey`. The Shell
-owns Super+V (default) through GSettings.
+owns Super+Alt+V (default) through GSettings. Super+V is left for GNOME's
+notification list.
 
 ## Requirements
 
 - GNOME Shell **46–50** listed in `metadata.json` so the extension can load on
   current Ubuntu GNOME. The layout is ESM (GNOME 45+). **No Shell version was
-  runtime-tested** for Super+V or insert (static review only).
+  runtime-tested** for Super+Alt+V or insert (static review only).
 - `clipl-daemon` running in the same user session
 - `clipl-desktop` running (hidden is fine) so the daemon has a subscriber
 - This extension enabled so insert can restore the previous window
@@ -56,18 +57,32 @@ gnome-extensions info clipl@io.clipl
 gsettings get org.gnome.shell.extensions.clipl activate-shortcut
 ```
 
-Default binding: `['<Super>v']`.
+Default binding: `['<Super><Alt>v']`.
 
-**Conflict:** recent GNOME versions also use Super+V for the notification
-list. Change either binding if they collide.
+**Conflict:** Ubuntu GNOME uses Super+V for the notification list, so
+ClipLinux does not take that chord. Super+Period is GNOME's emoji panel.
+Change the ClipLinux binding if it collides with something else:
 
 ```bash
 gsettings set org.gnome.shell.extensions.clipl activate-shortcut "['<Super>period']"
 ```
 
+Until the Shell extension is loaded (Wayland needs a log out/in), a GNOME
+**custom keyboard shortcut** can call `clipl toggle`:
+
+```bash
+bash packaging/linux/install-gnome-shortcut.sh
+```
+
+That binds Super+Alt+V without replacing your other custom shortcuts. Keep
+`clipl-daemon` and `clipl-desktop` running. After the extension is enabled,
+remove the "ClipLinux" custom shortcut in Settings → Keyboard so both do not
+fire on the same key (double-toggle).
+
 X11 sessions do **not** need this extension for the shortcut (`XGrabKey`).
 They also do not need it for insert (daemon XTest). On GNOME Wayland this
-extension is required for both.
+extension is required for insert; the custom shortcut can open the picker
+before a session restart.
 
 ## Security
 
