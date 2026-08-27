@@ -104,6 +104,11 @@ pub enum Request {
         /// History item whose payload should be copied.
         item_id: ClipboardItemId,
     },
+    /// GNOME Shell extension (or tests) pushes captured CLIPBOARD text.
+    RecordClipboard {
+        /// Plain text. Must not be used to log secrets; privacy still runs in the daemon.
+        text: String,
+    },
     /// Ask the daemon to paste an item (legacy; use InsertIntoApp after a clipboard write).
     Paste {
         /// History item to paste.
@@ -250,6 +255,11 @@ pub enum Response {
         item_id: ClipboardItemId,
         /// Text body. Never populated for hidden/sensitive items.
         text: String,
+    },
+    /// Whether captured clipboard text was stored (false if empty, skipped, or excluded).
+    ClipboardRecorded {
+        /// True when a history row was stored or reused.
+        stored: bool,
     },
     /// Paste accepted by the daemon (not yet executed).
     PasteAccepted,
@@ -404,6 +414,12 @@ mod tests {
         let prepare = Envelope::new(Message::Event(Event::PrepareInsert));
         let prepare_json = String::from_utf8(prepare.to_json_bytes().unwrap()).unwrap();
         assert!(prepare_json.contains("PrepareInsert"));
+        let record = Envelope::new(Message::Request(Request::RecordClipboard {
+            text: "copied".into(),
+        }));
+        let record_json = String::from_utf8(record.to_json_bytes().unwrap()).unwrap();
+        assert!(record_json.contains("RecordClipboard"));
+        assert!(record_json.contains("copied"));
     }
 
     #[test]

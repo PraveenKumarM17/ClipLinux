@@ -183,6 +183,7 @@ impl DaemonState {
             Request::PinItem { item_id } => self.set_pin(item_id, true),
             Request::UnpinItem { item_id } => self.set_pin(item_id, false),
             Request::CopyItem { item_id } => self.copy_item(item_id),
+            Request::RecordClipboard { text } => self.record_clipboard_text(text),
             Request::ListSnippets => Response::Snippets(Vec::new()),
             Request::ListPrivacyRules => Response::PrivacyRules(default_rules()),
             Request::Paste { .. } => Response::Error {
@@ -252,6 +253,26 @@ impl DaemonState {
             *skip = Some((hash, std::time::Instant::now()));
         }
         Response::Copied { item_id, text }
+    }
+
+    fn record_clipboard_text(&self, text: String) -> Response {
+        const MAX_TEXT: usize = 1024 * 1024;
+        if text.is_empty() {
+            return Response::ClipboardRecorded { stored: false };
+        }
+        if text.len() > MAX_TEXT {
+            return Response::Error {
+                message: "clipboard text exceeds 1 MiB".into(),
+            };
+        }
+        let stored = ingest(
+            self,
+            ClipboardContent::Text {
+                text,
+                mime: "text/plain".into(),
+            },
+        );
+        Response::ClipboardRecorded { stored }
     }
 
     fn should_skip_copy(&self, hash: &str) -> bool {
@@ -496,7 +517,9 @@ fn watch_loop(backend: Box<dyn ClipboardBackend>, state: Arc<DaemonState>) {
     };
     while !state.shutdown.load(Ordering::SeqCst) {
         match watcher.recv_timeout(Duration::from_millis(400)) {
-            Ok(Some(content)) => ingest(&state, content),
+            Ok(Some(content)) => {
+                let _ = ingest(&state, content);
+            }
             Ok(None) => {}
             Err(err) => {
                 tracing::warn!("clipboard watch error: {err}");
@@ -509,7 +532,7 @@ fn watch_loop(backend: Box<dyn ClipboardBackend>, state: Arc<DaemonState>) {
     }
 }
 
-fn ingest(state: &DaemonState, content: ClipboardContent) {
+fn ingest(state: &DaemonState, content: ClipboardContent) -> bool {
     if !matches!(
         content,
         ClipboardContent::Text { .. }
@@ -517,12 +540,12 @@ fn ingest(state: &DaemonState, content: ClipboardContent) {
             | ClipboardContent::Uri { .. }
     ) {
         tracing::debug!("ignored non-text clipboard event");
-        return;
+        return false;
     }
     let hash = content_hash(&content);
     if state.should_skip_copy(&hash) {
         tracing::debug!("skipped clipboard echo from palette copy");
-        return;
+        return false;
     }
     let item = ClipboardItem {
         id: clipl_core::ClipboardItemId::new(),
@@ -540,15 +563,17 @@ fn ingest(state: &DaemonState, content: ClipboardContent) {
     };
     let Ok(engine) = state.engine.lock() else {
         tracing::warn!("history lock poisoned");
-        return;
+        return false;
     };
     match engine.record(&item) {
         Ok(recorded) => match recorded.outcome {
             RecordOutcome::Stored => {
                 tracing::info!(id = %recorded.item_id, "recorded clipboard item");
+                true
             }
             RecordOutcome::Reused => {
                 tracing::debug!(id = %recorded.item_id, "reused consecutive duplicate");
+                true
             }
             RecordOutcome::Excluded => {
                 let reason = recorded
@@ -557,15 +582,21 @@ fn ingest(state: &DaemonState, content: ClipboardContent) {
                     .map(|v| v.reasons.join("; "))
                     .unwrap_or_default();
                 tracing::info!(reason = %reason, "excluded clipboard item");
+                false
             }
             RecordOutcome::NeedsConfirmation => {
                 tracing::info!("clipboard item requires confirmation; not stored");
+                false
             }
             RecordOutcome::Skipped => {
                 tracing::debug!("clipboard item skipped");
+                false
             }
         },
-        Err(err) => tracing::warn!("failed to record clipboard item: {err}"),
+        Err(err) => {
+            tracing::warn!("failed to record clipboard item: {err}");
+            false
+        }
     }
 }
 
@@ -845,7 +876,47 @@ mod tests {
     }
 
     #[test]
-    fn subscribe_then_toggle_delivers_event() {
+    fn record_clipboard_text_appears_in_history() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(
+                test_config(),
+                wayland_identity(),
+                mock_selection(MemoryClipboard::default()),
+                dirs_thread,
+                stop,
+            )
+            .unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client
+            .request(Request::RecordClipboard {
+                text: "hello from gnome".into(),
+            })
+            .unwrap()
+        {
+            Response::ClipboardRecorded { stored } => assert!(stored),
+            other => panic!("unexpected {other:?}"),
+        }
+        let items = wait_history(&sock, |rows| {
+            rows.iter()
+                .any(|row| row.content.text_for_scan() == Some("hello from gnome"))
+        });
+        assert!(items
+            .iter()
+            .any(|row| row.content.text_for_scan() == Some("hello from gnome")));
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn toggle_desktop_reaches_subscriber() {
         let tmp = tempfile::tempdir().unwrap();
         let dirs = ClipLinuxPaths::isolated(tmp.path());
         let shutdown = Arc::new(AtomicBool::new(false));

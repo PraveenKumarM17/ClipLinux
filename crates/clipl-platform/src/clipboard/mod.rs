@@ -101,9 +101,11 @@ fn gnome_selection() -> SelectedClipboard {
     SelectedClipboard {
         backend: Box::new(GnomeClipboard::new()),
         name: "gnome",
-        watch: SupportLevel::Unsupported,
+        watch: SupportLevel::Portal,
         read: SupportLevel::Unsupported,
-        reason: "GNOME on Wayland does not expose a generic clipboard watch API; a Shell extension is required (see extensions/gnome)".into(),
+        reason:
+            "GNOME Wayland clipboard watch is the Shell extension pushing text over the Unix socket"
+                .into(),
     }
 }
 
@@ -145,13 +147,14 @@ mod tests {
     }
 
     #[test]
-    fn gnome_wayland_is_unsupported_watch() {
+    fn gnome_wayland_watch_is_portal() {
         let cfg = ClipboardConfig::default();
         let selected = select_clipboard_backend(
             &identity(SessionType::Wayland, DesktopEnvironment::Gnome),
             &cfg,
         );
         assert_eq!(selected.name, "gnome");
-        assert_eq!(selected.watch, SupportLevel::Unsupported);
+        assert_eq!(selected.watch, SupportLevel::Portal);
+        assert!(!selected.backend.supports_watch());
     }
 }

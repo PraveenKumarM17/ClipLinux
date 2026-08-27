@@ -23,7 +23,7 @@ The source of truth at runtime is `PlatformCapabilities` plus
 | X11 + XFixes | `x11` | **IMPLEMENTED** Native (text) | **IMPLEMENTED** Native (`XFixesSelectionNotify`) | CLIPBOARD by default; PRIMARY optional via config |
 | X11 connect fail | `x11-unavailable` | Unsupported | Unsupported | Diagnose prints the error |
 | Generic Wayland | `wayland-generic` | **UNSUPPORTED** | **UNSUPPORTED** | No portable protocol; does **not** poll `wl-paste` |
-| GNOME Wayland | `gnome` | **UNSUPPORTED** | **UNSUPPORTED** | Clipboard watch needs a **future** clipboard-bridge extension. `extensions/gnome` provides activation **and** restore-focus Ctrl+V insert. |
+| GNOME Wayland | `gnome` | **UNSUPPORTED** (daemon) | **PORTAL** (Shell extension `RecordClipboard`) | Mutter has no `wlr-data-control`. `extensions/gnome` watches CLIPBOARD and pushes text to the daemon. |
 | KDE / Hyprland / Sway / wlroots | slot only | **PLANNED** | **PLANNED** | Named adapters, not implemented |
 | Unknown session | `none` | Unknown | Unknown | Watch not started |
 
@@ -50,9 +50,10 @@ sleep so shutdown is prompt. It does **not** spawn `xclip` in a loop.
 
 ### GNOME Wayland
 
-Mutter does not offer `wlr-data-control` to regular clients. The daemon reports
-Unsupported and keeps serving IPC. A future GNOME Shell extension should push
-text to the daemon over the Unix socket — not key injection from the daemon.
+Mutter does not offer `wlr-data-control` to regular clients. The daemon does
+not watch CLIPBOARD in-process. The GNOME Shell extension pushes text over
+the Unix socket (`RecordClipboard`). Privacy, dedup, and SQLite still run in
+the daemon. This is not key injection and not `wl-paste` polling.
 
 ## Adapter selection
 
@@ -61,7 +62,7 @@ text to the daemon over the Unix socket — not key injection from the daemon.
 - `linux-generic` — XDG probe + capability fill
 - `x11` — XFixes backend
 - `wayland-generic` — honest stub
-- `gnome` — honest clipboard stub + extension boundary (activation + insert)
+- `gnome` — Shell extension boundary (activation, insert, clipboard push)
 
 ## Activation backend matrix (Phase 4A)
 

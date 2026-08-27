@@ -294,6 +294,7 @@ mod tests {
         assert_eq!(caps.level(Capability::GlobalHotkey), SupportLevel::Portal);
         assert_eq!(caps.level(Capability::GnomeExtension), SupportLevel::Portal);
         assert_eq!(caps.level(Capability::InsertIntoApp), SupportLevel::Portal);
+        assert_eq!(caps.level(Capability::ClipboardWatch), SupportLevel::Portal);
     }
 
     #[test]

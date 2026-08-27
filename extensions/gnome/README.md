@@ -1,10 +1,15 @@
 # ClipLinux GNOME Shell extension
 
-This extension is the **GNOME Wayland activation and insert backend**. It does
-not monitor the clipboard or open SQLite. After a pick it may send **Ctrl+V**
-only — never the clipboard payload as typed keys.
+This extension is the **GNOME Wayland activation, insert, and clipboard
+bridge**. It does not open SQLite. After a pick it may send **Ctrl+V** only —
+never the clipboard payload as typed keys. On copy it reads CLIPBOARD text in
+the Shell and sends `RecordClipboard` to the daemon.
 
 ```
+Copy in another app
+        ↓
+Shell owner-changed → St.Clipboard.get_text → RecordClipboard → daemon history
+
 GNOME Shell shortcut or `clipl toggle`
         ↓
 daemon sends PrepareInsert (extension snapshots the focused app)
@@ -76,15 +81,16 @@ remove the "ClipLinux" custom shortcut in Settings → Keyboard so both do not
 fire on the same key (double-toggle).
 
 X11 sessions do **not** need this extension for the shortcut (`XGrabKey`).
-They also do not need it for insert (daemon XTest). On GNOME Wayland this
-extension is required for insert; the custom shortcut can open the picker
-before a session restart.
+They also do not need it for insert (daemon XTest) or history (XFixes).
+On GNOME Wayland this extension is required for insert **and** for copies
+to appear in history. The custom shortcut can open the picker before a
+session restart, but copies will not be recorded until the extension loads.
 
 ## Security
 
 - Local Unix socket only (`0600`)
-- Actions are hardcoded `ToggleDesktop` / `SubscribeInsert` / Ctrl+V — no
-  user-controlled command string
+- Actions are hardcoded `ToggleDesktop` / `SubscribeInsert` / `RecordClipboard`
+  / Ctrl+V — no user-controlled command string
 - No `GLib.spawn_*`, no `xdg-open`, no `ydotool`, no typing of clipboard text
 - `SubscribeInsert` uses `read_bytes_async` so the Shell is not blocked
 - If `io.clipl.ClipLinux.desktop` is installed, the extension may call

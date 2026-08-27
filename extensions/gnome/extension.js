@@ -5,11 +5,14 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
+import St from 'gi://St';
 
 const SHORTCUT_KEY = 'activate-shortcut';
 const DESKTOP_ID = 'io.clipl.ClipLinux.desktop';
 const RECONNECT_MS = 2000;
 const PASTE_DELAY_MS = 120;
+const CLIPBOARD_DEBOUNCE_MS = 50;
+const MAX_CLIPBOARD_CHARS = 1024 * 1024;
 
 export default class ClipLinuxExtension extends Extension {
     enable() {
@@ -17,6 +20,17 @@ export default class ClipLinuxExtension extends Extension {
         this._insertTarget = null;
         this._insertConnection = null;
         this._insertCancellable = new Gio.Cancellable();
+        this._clipboard = St.Clipboard.get_default();
+        this._lastClipboard = '';
+        this._clipboardTimeout = 0;
+        this._ownerChangedId = 0;
+        this._selection = global.display.get_selection();
+        if (this._selection) {
+            this._ownerChangedId = this._selection.connect('owner-changed', (_sel, type) => {
+                if (type === Meta.SelectionType.SELECTION_CLIPBOARD)
+                    this._scheduleClipboardRead();
+            });
+        }
         Main.wm.addKeybinding(
             SHORTCUT_KEY,
             this._settings,
@@ -29,6 +43,17 @@ export default class ClipLinuxExtension extends Extension {
 
     disable() {
         Main.wm.removeKeybinding(SHORTCUT_KEY);
+        if (this._clipboardTimeout) {
+            GLib.source_remove(this._clipboardTimeout);
+            this._clipboardTimeout = 0;
+        }
+        if (this._selection && this._ownerChangedId) {
+            this._selection.disconnect(this._ownerChangedId);
+            this._ownerChangedId = 0;
+        }
+        this._selection = null;
+        this._clipboard = null;
+        this._lastClipboard = '';
         if (this._insertCancellable) {
             this._insertCancellable.cancel();
             this._insertCancellable = null;
@@ -45,6 +70,33 @@ export default class ClipLinuxExtension extends Extension {
         tryActivateDesktopApp();
         if (!delivered)
             Main.notify('ClipLinux', 'clipl-daemon is not running. Start it, then press Super+Alt+V again.');
+    }
+
+    _scheduleClipboardRead() {
+        if (this._clipboardTimeout) {
+            GLib.source_remove(this._clipboardTimeout);
+            this._clipboardTimeout = 0;
+        }
+        this._clipboardTimeout = GLib.timeout_add(GLib.PRIORITY_DEFAULT, CLIPBOARD_DEBOUNCE_MS, () => {
+            this._clipboardTimeout = 0;
+            this._readClipboard();
+            return GLib.SOURCE_REMOVE;
+        });
+    }
+
+    _readClipboard() {
+        if (!this._clipboard)
+            return;
+        this._clipboard.get_text(St.ClipboardType.CLIPBOARD, (_clip, text) => {
+            if (!this._clipboard)
+                return;
+            if (!text || text === this._lastClipboard)
+                return;
+            if (text.length > MAX_CLIPBOARD_CHARS)
+                return;
+            this._lastClipboard = text;
+            recordClipboardText(text);
+        });
     }
 
     _rememberFocus() {
@@ -69,9 +121,9 @@ export default class ClipLinuxExtension extends Extension {
             } catch (error) {
                 if (cancellable.is_cancelled())
                     return;
-            const message = error && error.message ? String(error.message) : String(error);
-            if (!message.includes('socket is missing') && !message.includes('IPC ended'))
-                logError(error, 'ClipLinux SubscribeInsert reconnecting');
+                const message = error && error.message ? String(error.message) : String(error);
+                if (!message.includes('socket is missing') && !message.includes('IPC ended'))
+                    logError(error, 'ClipLinux SubscribeInsert reconnecting');
             }
             closeQuietly(this._insertConnection);
             this._insertConnection = null;
@@ -158,6 +210,30 @@ function sendToggle(path) {
         logError(error, 'ClipLinux ToggleDesktop failed');
         closeQuietly(connection);
         return false;
+    }
+}
+
+function recordClipboardText(text) {
+    const path = socketPath();
+    const file = Gio.File.new_for_path(path);
+    if (!file.query_exists(null))
+        return;
+
+    let connection = null;
+    try {
+        const client = new Gio.SocketClient();
+        const address = new Gio.UnixSocketAddress({path});
+        connection = client.connect(address, null);
+        const output = connection.get_output_stream();
+        const input = connection.get_input_stream();
+        writeFrame(output, {
+            id: GLib.uuid_string_random(),
+            payload: {Request: {RecordClipboard: {text}}},
+        });
+        readFrame(input);
+        connection.close(null);
+    } catch (_error) {
+        closeQuietly(connection);
     }
 }
 

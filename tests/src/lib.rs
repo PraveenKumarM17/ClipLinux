@@ -66,6 +66,9 @@ fn gnome_extension_does_not_spawn_shell() {
     assert!(js.contains("ToggleDesktop"));
     assert!(js.contains("SubscribeInsert"));
     assert!(js.contains("PrepareInsert"));
+    assert!(js.contains("RecordClipboard"));
+    assert!(js.contains("owner-changed"));
+    assert!(js.contains("St.Clipboard"));
     assert!(js.contains("InsertIntoApp"));
     assert!(js.contains("create_virtual_device"));
     assert!(js.contains("KEY_Control_L"));

@@ -1,7 +1,8 @@
 # Clipboard engine
 
 Status: **IMPLEMENTED** for text history (privacy → dedup → SQLite).
-OS watch is **PARTIALLY IMPLEMENTED** (X11 Native; Wayland Unsupported).
+OS watch is **PARTIALLY IMPLEMENTED** (X11 Native; GNOME Wayland Portal via
+the Shell extension; generic Wayland Unsupported).
 
 ## Pipeline
 
@@ -17,6 +18,9 @@ ClipboardContent
 ```
 
 Privacy always runs **before** SQLite. Excluded items leave no row.
+
+On GNOME Wayland the Shell extension is the capture path (`RecordClipboard`).
+The daemon still runs this pipeline; it does not poll `wl-paste`.
 
 ## Duplicate policy (Phase 2)
 

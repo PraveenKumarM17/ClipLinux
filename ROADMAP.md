@@ -20,11 +20,8 @@ Statically validated. GNOME Shell Super+V was **not** runtime-tested.
 - [x] Capability-based activation (X11 `XGrabKey`, GNOME Shell extension)
 - [x] `clipl open` / `toggle` / `hide`
 - [x] Insert into the previous app (copy + hide + Ctrl+V; GNOME extension / X11)
+- [x] GNOME Shell extension clipboard bridge (text push over IPC)
 - [ ] KDE / Sway / Hyprland activation backends
-- [ ] Overlay popup positioning
-- [ ] Snippets catalogs in the UI
-- [ ] Remote media providers
-- [ ] GNOME Shell extension clipboard bridge
 
 ## Next (not started)
 
@@ -48,7 +45,7 @@ X11 and GNOME Wayland.
 **Not runtime-tested:** live Super+V on GNOME Shell, live insert into another app.
 
 **Does not ship:** KDE backend, Sway/Hyprland in-process grabs, generic Wayland
-global hotkeys, GNOME clipboard push.
+global hotkeys.
 
 ## Milestone E — Media
 

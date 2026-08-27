@@ -1,7 +1,7 @@
 {
   "uuid": "clipl@io.clipl",
   "name": "ClipLinux",
-  "description": "GNOME Shell shortcut that asks the local ClipLinux daemon to show the picker. Does not read clipboard history or open SQLite.",
+  "description": "GNOME Shell shortcut, restore-focus Ctrl+V insert, and CLIPBOARD text push to the local ClipLinux daemon. Does not open SQLite.",
   "shell-version": ["46", "47", "48", "49", "50"],
   "url": "https://github.com/PraveenKumarM17/ClipLinux",
   "settings-schema": "org.gnome.shell.extensions.clipl",

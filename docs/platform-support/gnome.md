@@ -5,9 +5,10 @@ and from generic Wayland.
 
 ## Clipboard
 
-Mutter does not offer `wlr-data-control` to regular clients. Clipboard
-**watch** remains `Unsupported` until a future extension pushes text to the
-daemon. Phase 4A does **not** add clipboard bridging.
+Mutter does not offer `wlr-data-control` to regular clients. The Shell
+extension watches CLIPBOARD (`Meta.Selection` `owner-changed`) and sends
+`RecordClipboard` to the daemon. Privacy, dedup, and SQLite still run in
+the daemon. Generic polling of `wl-paste` is not used.
 
 ## Activation (Phase 4A)
 
@@ -40,7 +41,9 @@ the emoji panel.
 A custom GNOME shortcut that runs `clipl toggle` is also supported (see
 [extensions/gnome/README.md](../../extensions/gnome/README.md)) and works
 before a session restart. It does **not** snapshot the focused window;
-the Shell extension still does that for insert.
+the Shell extension still does that for insert. Copies also do not appear
+in history until the extension is loaded.
 
 X11 GNOME sessions prefer the daemon `XGrabKey` path when
-`[activation.x11] enabled = true`. The extension is not required there.
+`[activation.x11] enabled = true`. The extension is not required there
+(XFixes watches CLIPBOARD).

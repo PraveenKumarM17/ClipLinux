@@ -1,13 +1,13 @@
 //! GNOME Wayland clipboard boundary.
 //!
-//! Mutter does not offer wlr-data-control to regular clients. Clipboard watch
-//! requires a GNOME Shell extension (see `extensions/gnome`) or a portal that
-//! does not exist for clipboard history. This backend does not inject keys or
-//! scrape the Shell.
+//! Mutter does not offer wlr-data-control to regular clients. The Shell
+//! extension watches CLIPBOARD (`Meta.Selection` owner-changed) and pushes
+//! text to the daemon with `RecordClipboard`. This backend does not inject
+//! keys or scrape the Shell from the daemon process.
 
 use clipl_core::{ClipboardBackend, ClipboardContent, Error, Result};
 
-/// GNOME session adapter: watch is unsupported until the extension exists.
+/// GNOME session adapter: in-process watch stays off; the Shell extension pushes text.
 #[derive(Debug, Default, Clone)]
 pub struct GnomeClipboard;
 
@@ -25,7 +25,7 @@ impl ClipboardBackend for GnomeClipboard {
 
     fn read(&self) -> Result<Option<ClipboardContent>> {
         Err(Error::unsupported(
-            "GNOME Wayland clipboard read requires a Shell extension",
+            "GNOME Wayland clipboard read is the Shell extension; query history over IPC",
         ))
     }
 
