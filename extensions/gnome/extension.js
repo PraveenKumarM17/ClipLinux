@@ -9,7 +9,7 @@ import Shell from 'gi://Shell';
 const SHORTCUT_KEY = 'activate-shortcut';
 const DESKTOP_ID = 'io.clipl.ClipLinux.desktop';
 const RECONNECT_MS = 2000;
-const PASTE_DELAY_MS = 80;
+const PASTE_DELAY_MS = 120;
 
 export default class ClipLinuxExtension extends Extension {
     enable() {
@@ -44,7 +44,7 @@ export default class ClipLinuxExtension extends Extension {
         const delivered = sendToggle(socketPath());
         tryActivateDesktopApp();
         if (!delivered)
-            Main.notify('ClipLinux', 'clipl-daemon is not running. Start it, then press Super+V again.');
+            Main.notify('ClipLinux', 'clipl-daemon is not running. Start it, then press Super+Alt+V again.');
     }
 
     _rememberFocus() {
@@ -100,6 +100,8 @@ export default class ClipLinuxExtension extends Extension {
         await readFrameAsync(input, cancellable);
         while (!cancellable.is_cancelled()) {
             const envelope = await readFrameAsync(input, cancellable);
+            if (isPrepareEvent(envelope))
+                this._rememberFocus();
             if (isInsertEvent(envelope))
                 this._restoreAndPaste();
         }
@@ -107,13 +109,12 @@ export default class ClipLinuxExtension extends Extension {
 
     _restoreAndPaste() {
         const win = this._insertTarget;
-        if (!win || isClipLinuxWindow(win))
-            return;
-        try {
-            win.activate(global.get_current_time());
-        } catch (error) {
-            logError(error, 'ClipLinux could not restore the previous window');
-            return;
+        if (win && !isClipLinuxWindow(win)) {
+            try {
+                win.activate(global.get_current_time());
+            } catch (error) {
+                logError(error, 'ClipLinux could not restore the previous window');
+            }
         }
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, PASTE_DELAY_MS, () => {
             try {
@@ -169,6 +170,10 @@ function isDelivered(reply) {
 
 function isInsertEvent(envelope) {
     return envelope?.payload?.Event === 'InsertIntoApp';
+}
+
+function isPrepareEvent(envelope) {
+    return envelope?.payload?.Event === 'PrepareInsert';
 }
 
 function isClipLinuxWindow(win) {

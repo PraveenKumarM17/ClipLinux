@@ -26,8 +26,9 @@ needs WebKitGTK on the host.
 ## Window
 
 - About 440×560, resizable, minimum 360×420
-- Centered, not maximized, native titlebar
-- Escape and the titlebar close button **hide** the window (they do not quit)
+- Centered, always on top, **not** in the taskbar / app switcher
+- Starts **hidden**; Super+Alt+V (or `clipl toggle`) shows it
+- Escape, the close button, and clicking another window **hide** it (the process stays running)
 - Overlay positioning relative to the focused window is still later
 
 On startup the host connects to `clipl-daemon`, fetches status and recent

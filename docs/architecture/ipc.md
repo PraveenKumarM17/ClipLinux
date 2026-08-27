@@ -52,8 +52,11 @@ activation report. It does **not** contain clipboard payloads.
 Ordinary commands still open one request per connection. The desktop keeps a
 **second** `SubscribeDesktop` connection open so the daemon can push
 `ActivatePicker` events. The GNOME extension keeps a **third**
-`SubscribeInsert` connection open for restore-focus + Ctrl+V. Only one
-subscriber is stored per hub; a new connection replaces the previous one.
+`SubscribeInsert` connection open for restore-focus + Ctrl+V. On Show/Toggle the
+daemon first sends `Event::PrepareInsert` so the extension can snapshot the
+focused window **before** the picker takes focus (needed when GNOME's custom
+shortcut runs `clipl toggle`). Only one subscriber is stored per hub; a new
+connection replaces the previous one.
 
 `InsertIntoApp` does not include the clipboard payload. The desktop must
 already have written CLIPBOARD and hidden the picker. If no insert backend

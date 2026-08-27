@@ -290,6 +290,9 @@ impl DaemonState {
     }
 
     fn route_desktop(&self, action: ActivationRequest) -> Response {
+        if action != ActivationRequest::HidePicker {
+            let _ = self.insert_hub.prepare();
+        }
         Response::DesktopRouted {
             delivered: self.hub.route(action),
         }

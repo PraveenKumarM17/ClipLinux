@@ -21,9 +21,10 @@
         "resizable": true,
         "maximizable": false,
         "decorations": true,
-        "visible": true,
+        "visible": false,
         "center": true,
-        "skipTaskbar": false
+        "alwaysOnTop": true,
+        "skipTaskbar": true
       }
     ],
     "security": {

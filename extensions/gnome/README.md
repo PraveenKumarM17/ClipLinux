@@ -5,19 +5,15 @@ not monitor the clipboard or open SQLite. After a pick it may send **Ctrl+V**
 only — never the clipboard payload as typed keys.
 
 ```
-GNOME Shell shortcut
+GNOME Shell shortcut or `clipl toggle`
         ↓
-ClipLinux extension remembers global.display.focus_window
+daemon sends PrepareInsert (extension snapshots the focused app)
         ↓
-Unix socket ToggleDesktop  ($XDG_RUNTIME_DIR/clipl/daemon.sock)
-        ↓
-clipl-daemon
-        ↓
-subscribed clipl-desktop shows the picker
+daemon ToggleDesktop → picker shows
         ↓
 pick → desktop writes CLIPBOARD, hides, InsertIntoApp
         ↓
-extension activates the saved window and sends Ctrl+V
+extension restores that app and sends Ctrl+V
 ```
 
 On GNOME Wayland, `clipl-daemon` **must not** call `XGrabKey`. The Shell

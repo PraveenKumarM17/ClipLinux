@@ -373,6 +373,8 @@ pub enum Event {
         /// Show, hide, or toggle.
         action: ActivationRequest,
     },
+    /// Ask the GNOME extension to remember the currently focused window.
+    PrepareInsert,
     /// Ask the GNOME extension to restore the previous window and send Ctrl+V.
     InsertIntoApp,
 }
@@ -399,6 +401,9 @@ mod tests {
         let insert = Envelope::new(Message::Request(Request::InsertIntoApp));
         let insert_json = String::from_utf8(insert.to_json_bytes().unwrap()).unwrap();
         assert!(insert_json.contains("InsertIntoApp"));
+        let prepare = Envelope::new(Message::Event(Event::PrepareInsert));
+        let prepare_json = String::from_utf8(prepare.to_json_bytes().unwrap()).unwrap();
+        assert!(prepare_json.contains("PrepareInsert"));
     }
 
     #[test]

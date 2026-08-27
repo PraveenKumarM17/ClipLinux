@@ -111,9 +111,14 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
 
     tauri::Builder::default()
         .manage(PickerState {
-            visibility: Mutex::new(PickerVisibility::Shown),
+            visibility: Mutex::new(PickerVisibility::Hidden),
+            shown_at: Mutex::new(None),
         })
         .setup(|app| {
+            if let Some(window) = app.get_webview_window("palette") {
+                let _ = window.set_skip_taskbar(true);
+                let _ = window.hide();
+            }
             let handle = app.handle().clone();
             thread::spawn(move || loop {
                 match ActivationSubscriber::connect_path(&paths::socket_path()) {
@@ -133,16 +138,17 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
             });
             Ok(())
         })
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+        .on_window_event(|window, event| match event {
+            tauri::WindowEvent::CloseRequested { api, .. } => {
                 api.prevent_close();
-                let _ = window.hide();
-                if let Some(state) = window.try_state::<PickerState>() {
-                    if let Ok(mut vis) = state.visibility.lock() {
-                        *vis = PickerVisibility::Hidden;
-                    }
+                hide_picker_window(window);
+            }
+            tauri::WindowEvent::Focused(false) => {
+                if should_hide_on_blur(window) {
+                    hide_picker_window(window);
                 }
             }
+            _ => {}
         })
         .invoke_handler(tauri::generate_handler![
             cmd_get_daemon_status,
@@ -174,6 +180,50 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
 #[cfg(feature = "tauri-app")]
 struct PickerState {
     visibility: Mutex<PickerVisibility>,
+    shown_at: Mutex<Option<std::time::Instant>>,
+}
+
+#[cfg(feature = "tauri-app")]
+fn hide_picker_window(window: &tauri::Window) {
+    use tauri::Manager;
+    let _ = window.hide();
+    if let Some(state) = window.try_state::<PickerState>() {
+        if let Ok(mut vis) = state.visibility.lock() {
+            *vis = PickerVisibility::Hidden;
+        }
+    }
+}
+
+#[cfg(feature = "tauri-app")]
+fn should_hide_on_blur(window: &tauri::Window) -> bool {
+    use tauri::Manager;
+    let Some(state) = window.try_state::<PickerState>() else {
+        return false;
+    };
+    let Ok(vis) = state.visibility.lock() else {
+        return false;
+    };
+    if *vis != PickerVisibility::Shown {
+        return false;
+    }
+    drop(vis);
+    let Ok(shown_at) = state.shown_at.lock() else {
+        return true;
+    };
+    match *shown_at {
+        Some(at) if at.elapsed() < std::time::Duration::from_millis(350) => false,
+        _ => true,
+    }
+}
+
+#[cfg(feature = "tauri-app")]
+fn mark_picker_shown(app: &tauri::AppHandle) {
+    use tauri::Manager;
+    if let Some(state) = app.try_state::<PickerState>() {
+        if let Ok(mut shown_at) = state.shown_at.lock() {
+            *shown_at = Some(std::time::Instant::now());
+        }
+    }
 }
 
 #[cfg(feature = "tauri-app")]
@@ -196,8 +246,10 @@ fn apply_window_action(app: &tauri::AppHandle, action: clipl_core::ActivationReq
     };
     match next {
         PickerVisibility::Shown => {
+            mark_picker_shown(app);
             let _ = window.show();
             let _ = window.unminimize();
+            let _ = window.set_skip_taskbar(true);
             let _ = window.set_focus();
             let _ = app.emit("picker-activated", ());
         }
@@ -221,8 +273,10 @@ fn set_picker_visible(window: &tauri::WebviewWindow, app: &tauri::AppHandle, sho
         }
     }
     if shown {
+        mark_picker_shown(app);
         let _ = window.show();
         let _ = window.unminimize();
+        let _ = window.set_skip_taskbar(true);
         let _ = window.set_focus();
         let _ = app.emit("picker-activated", ());
     } else {
@@ -416,7 +470,7 @@ fn copy_then_insert(
 ) -> Result<InsertOutcome, String> {
     write()?;
     set_picker_visible(window, app, false);
-    std::thread::sleep(std::time::Duration::from_millis(80));
+    std::thread::sleep(std::time::Duration::from_millis(120));
     match insert_into_app(&DaemonClient::from_env()) {
         Ok(outcome) => Ok(outcome),
         Err(_) => Ok(InsertOutcome {

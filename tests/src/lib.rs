@@ -65,6 +65,7 @@ fn gnome_extension_does_not_spawn_shell() {
     let js = include_str!("../../extensions/gnome/extension.js");
     assert!(js.contains("ToggleDesktop"));
     assert!(js.contains("SubscribeInsert"));
+    assert!(js.contains("PrepareInsert"));
     assert!(js.contains("InsertIntoApp"));
     assert!(js.contains("create_virtual_device"));
     assert!(js.contains("KEY_Control_L"));
@@ -91,8 +92,7 @@ fn gnome_schema_declares_shortcut() {
         include_str!("../../extensions/gnome/schemas/org.gnome.shell.extensions.clipl.gschema.xml");
     assert!(xml.contains("activate-shortcut"));
     assert!(
-        xml.contains("&lt;Super&gt;&lt;Alt&gt;v")
-            || xml.contains("<![CDATA[['<Super><Alt>v']]]>")
+        xml.contains("&lt;Super&gt;&lt;Alt&gt;v") || xml.contains("<![CDATA[['<Super><Alt>v']]]>")
     );
 }
 

@@ -74,6 +74,14 @@ impl InsertHub {
     }
 
     pub(crate) fn route(&self) -> bool {
+        self.send(Event::InsertIntoApp)
+    }
+
+    pub(crate) fn prepare(&self) -> bool {
+        self.send(Event::PrepareInsert)
+    }
+
+    fn send(&self, event: Event) -> bool {
         let mut slot = self
             .subscriber
             .lock()
@@ -81,7 +89,7 @@ impl InsertHub {
         let Some(stream) = slot.as_mut() else {
             return false;
         };
-        let envelope = Envelope::new(Message::Event(Event::InsertIntoApp));
+        let envelope = Envelope::new(Message::Event(event));
         match write_frame(&mut *stream, &envelope) {
             Ok(()) => true,
             Err(_) => {
