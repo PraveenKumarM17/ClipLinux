@@ -24,7 +24,9 @@
     }
     if (view.monitoring === "Partial") {
       return {
-        label: "Partial monitoring",
+        label: view.reason.includes("ClipLinux extension")
+          ? "Extension needed"
+          : "Partial monitoring",
         tone: "warn",
         detail: view.reason || "Clipboard monitoring is limited in this session",
       };

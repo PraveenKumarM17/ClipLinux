@@ -73,6 +73,11 @@
   );
   const searching = $derived(isUniversalQuery(session.query));
   const searchPlaceholder = "Search history, emoji, symbols…";
+  const emptyHistoryDetail = $derived(
+    session.connection.kind === "connected" && session.connection.monitoring !== "Supported"
+      ? session.connection.reason
+      : "Copy text in another app and it will appear here when monitoring is available.",
+  );
 
   onMount(() => {
     startSession();
@@ -357,7 +362,7 @@
       {:else if surface === "empty"}
         <EmptyState
           title="No clipboard history yet"
-          detail="Copy text in another app and it will appear here when monitoring is available."
+          detail={emptyHistoryDetail}
         />
       {:else if surface === "no-results"}
         <EmptyState title="No results" detail={`Nothing matched “${session.query}”.`} />

@@ -307,6 +307,16 @@ impl DaemonState {
     fn status_with_activation(&self) -> DaemonStatus {
         let mut status = self.status.clone();
         status.activation = self.activation_report();
+        if status.backend == "gnome" {
+            if self.insert_hub.connected() {
+                status.monitoring = MonitoringStatus::Supported;
+                status.monitoring_reason =
+                    "GNOME Shell extension is pushing CLIPBOARD text over the Unix socket".into();
+            } else {
+                status.monitoring = MonitoringStatus::Partial;
+                status.monitoring_reason = "GNOME Shell has not loaded the ClipLinux extension in this session. Log out and back in, then confirm ClipLinux is enabled in Extensions. Until then copies are not recorded and picks need Ctrl+V.".into();
+            }
+        }
         status
     }
 
@@ -343,14 +353,22 @@ impl DaemonState {
                 Err(_) => {
                     return Response::Inserted {
                         delivered: false,
-                        reason: copy_only_reason(),
+                        reason: self.insert_fallback_reason(),
                     };
                 }
             }
         }
         Response::Inserted {
             delivered: false,
-            reason: copy_only_reason(),
+            reason: self.insert_fallback_reason(),
+        }
+    }
+
+    fn insert_fallback_reason(&self) -> String {
+        if self.status.backend == "gnome" && !self.insert_hub.connected() {
+            "Copied. GNOME has not loaded the ClipLinux extension in this session — log out and back in, or press Ctrl+V now.".into()
+        } else {
+            copy_only_reason()
         }
     }
 }
@@ -711,7 +729,7 @@ pub fn session_capabilities(config: &ClipLinuxConfig) -> clipl_core::PlatformCap
 #[cfg(test)]
 mod tests {
     use super::*;
-    use clipl_protocol::{IpcClient, Request};
+    use clipl_protocol::{IpcClient, MonitoringStatus, Request};
 
     fn wait_history(
         sock: &std::path::Path,
@@ -868,6 +886,43 @@ mod tests {
             Response::Inserted { delivered, reason } => {
                 assert!(!delivered);
                 assert!(reason.contains("Ctrl+V"));
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+        shutdown.store(true, Ordering::SeqCst);
+        thread.join().unwrap();
+    }
+
+    #[test]
+    fn gnome_without_shell_helper_reports_partial_monitoring() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dirs = ClipLinuxPaths::isolated(tmp.path());
+        let shutdown = Arc::new(AtomicBool::new(false));
+        let stop = Arc::clone(&shutdown);
+        let identity = wayland_identity();
+        let mut selected = mock_selection(MemoryClipboard::default());
+        selected.name = "gnome";
+        let dirs_thread = dirs.clone();
+        let thread = thread::spawn(move || {
+            run_with_backend(test_config(), identity, selected, dirs_thread, stop).unwrap();
+        });
+        let sock = dirs.socket_file();
+        wait_socket(&sock);
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::GetStatus).unwrap() {
+            Response::Status(status) => {
+                assert_eq!(status.backend, "gnome");
+                assert_eq!(status.monitoring, MonitoringStatus::Partial);
+                assert!(status.monitoring_reason.contains("extension"));
+            }
+            other => panic!("unexpected {other:?}"),
+        }
+        let mut client = IpcClient::connect_path(&sock).unwrap();
+        match client.request(Request::InsertIntoApp).unwrap() {
+            Response::Inserted { delivered, reason } => {
+                assert!(!delivered);
+                assert!(reason.contains("Ctrl+V"));
+                assert!(reason.contains("extension"));
             }
             other => panic!("unexpected {other:?}"),
         }

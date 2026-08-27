@@ -45,11 +45,24 @@ EXT="$HOME/.local/share/gnome-shell/extensions/clipl@io.clipl"
 mkdir -p "$EXT"
 cp -a extensions/gnome/. "$EXT/"
 glib-compile-schemas "$EXT/schemas"
-gnome-extensions enable clipl@io.clipl
+python3 - <<'PY'
+import gi
+gi.require_version("Gio", "2.0")
+from gi.repository import Gio
+s = Gio.Settings.new("org.gnome.shell")
+exts = list(s.get_strv("enabled-extensions"))
+uuid = "clipl@io.clipl"
+if uuid not in exts:
+    exts.append(uuid)
+    s.set_strv("enabled-extensions", exts)
+print("enabled-extensions:", exts)
+PY
 ```
 
-On Wayland, restart the session (log out/in) after installing. `Alt+F2` `r`
-only restarts the Shell on X11.
+On Wayland, GNOME Shell **does not see a newly copied extension until you log
+out and back in**. `gnome-extensions enable` and `Alt+F2` `r` will fail until
+that session restart. Adding the UUID to `enabled-extensions` means it should
+turn on after login.
 
 Confirm:
 
