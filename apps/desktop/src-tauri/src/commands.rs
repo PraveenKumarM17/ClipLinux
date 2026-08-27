@@ -5,7 +5,8 @@ use clipl_protocol::{Request, Response};
 
 use crate::clipboard::ClipboardWriter;
 use crate::dto::{ConnectionView, HistoryRow, InsertOutcome};
-use crate::ipc::{disconnected_message, DaemonClient, START_COMMAND};
+use crate::ipc::{disconnected_message, DaemonClient};
+use crate::launch::start_command;
 
 const HISTORY_LIMIT: u32 = 200;
 
@@ -30,7 +31,7 @@ pub fn get_daemon_status(client: &DaemonClient) -> ConnectionView {
         },
         Err(err) => ConnectionView::Disconnected {
             message: disconnected_message(&err),
-            start_command: START_COMMAND.into(),
+            start_command: start_command().into(),
         },
     }
 }

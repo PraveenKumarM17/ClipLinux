@@ -7,14 +7,23 @@ stickers, symbols, and snippets — with a daemon, a CLI, and first-class
 desktop integrations. It is **not** an Electron app and **not** merely an
 emoji picker.
 
-**Latest completed milestone:** capability-based picker activation (Phase 4A).
-X11 registers Super+V (configurable) via `XGrabKey`. GNOME Wayland uses the
-Shell extension in `extensions/gnome` (default Super+Alt+V; Super+V is
-GNOME's notification list). That extension is **statically validated**, not
-GNOME-runtime-tested. Wayland clipboard monitoring is still **unsupported**.
-GIFs, stickers, snippets UI, cloud sync, and packaging are not implemented.
+**Latest completed milestone:** GNOME clipboard bridge + Linux packaging
+(`.deb` / `.rpm` / AppImage via Tauri). GNOME Wayland needs the Shell
+extension and a log out after install. GIFs, stickers, snippets UI, and
+cloud sync are not implemented.
 
-## Quick start
+## Who this works for
+
+| Session | History + insert | How to open |
+| --- | --- | --- |
+| GNOME Wayland | After the ClipLinux extension loads (log out/in) | Super+Alt+V |
+| X11 | Yes | Super+V (configurable) |
+| Other Wayland compositors | Not yet (copy + Ctrl+V only) | `clipl toggle` |
+
+This is **not** “runs on all Linux desktops.” KDE, Sway, and Hyprland still
+need compositor-specific work.
+
+## Quick start (from source)
 
 ```bash
 cargo test --workspace
@@ -39,6 +48,28 @@ cd apps/desktop
 npm install
 npm run tauri dev
 ```
+
+On GNOME Wayland, install `extensions/gnome` then **log out and back in**.
+See [extensions/gnome/README.md](extensions/gnome/README.md).
+
+## Packages
+
+Build installers (needs WebKitGTK; produces files under `target/release/bundle/`):
+
+```bash
+cd apps/desktop
+npm install
+npm run tauri build
+```
+
+`.deb` / `.rpm` autostart the daemon and picker on login and install the GNOME
+extension files. **Log out after installing on GNOME Wayland.** Other clipboard
+extensions do not need to be disabled first; if copies still do not appear,
+`gnome-extensions info clipl@io.clipl` should show the ClipLinux extension as
+enabled in this session.
+
+Release tags `v*.*.*` build those artifacts in GitHub Actions. Details:
+[packaging/linux/README.md](packaging/linux/README.md).
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for the full contributor workflow.
 

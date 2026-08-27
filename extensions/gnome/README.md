@@ -40,6 +40,8 @@ Wayland after updating.
 
 ## Install (user session)
 
+From source:
+
 ```bash
 EXT="$HOME/.local/share/gnome-shell/extensions/clipl@io.clipl"
 mkdir -p "$EXT"
@@ -58,6 +60,11 @@ if uuid not in exts:
 print("enabled-extensions:", exts)
 PY
 ```
+
+`.deb` / `.rpm` install the same files under
+`/usr/share/gnome-shell/extensions/clipl@io.clipl`. You still must **log out
+and back in**. The packaged picker then appends the UUID to
+`enabled-extensions` (it does not run `gnome-extensions enable` as root).
 
 On Wayland, GNOME Shell **does not see a newly copied extension until you log
 out and back in**. `gnome-extensions enable` and `Alt+F2` `r` will fail until

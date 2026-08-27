@@ -90,6 +90,44 @@ fn linux_desktop_file_is_well_formed() {
 }
 
 #[test]
+fn linux_autostart_files_start_daemon_and_picker() {
+    let daemon = include_str!("../../packaging/linux/io.clipl.ClipLinux-daemon.desktop");
+    assert!(daemon.contains("Exec=clipl-daemon"));
+    assert!(daemon.contains("X-GNOME-Autostart-enabled=true"));
+    let picker = include_str!("../../packaging/linux/io.clipl.ClipLinux-autostart.desktop");
+    assert!(picker.contains("Exec=clipl-desktop"));
+    assert!(picker.contains("X-GNOME-Autostart-enabled=true"));
+    assert!(picker.contains("Icon=clipl-desktop"));
+}
+
+#[test]
+fn deb_postinst_asks_for_a_gnome_logout() {
+    let sh = include_str!("../../apps/desktop/src-tauri/linux/postinst.sh");
+    assert!(sh.contains("log out"));
+    assert!(sh.contains("glib-compile-schemas"));
+    assert!(!sh.contains("gnome-extensions enable"));
+    assert!(!sh.contains("ydotool"));
+}
+
+#[test]
+fn github_release_workflow_builds_linux_bundles() {
+    let yml = include_str!("../../.github/workflows/release.yml");
+    assert!(yml.contains("npm run tauri build"));
+    assert!(yml.contains("GNOME"));
+    assert!(yml.contains(".deb"));
+    assert!(yml.contains("rpm"));
+}
+
+#[test]
+fn tauri_bundle_ships_daemon_without_external_bin() {
+    let conf = include_str!("../../apps/desktop/src-tauri/tauri.conf.json");
+    assert!(conf.contains("\"targets\": [\"deb\", \"rpm\", \"appimage\"]"));
+    assert!(conf.contains("/usr/bin/clipl-daemon"));
+    assert!(conf.contains("linux/postinst.sh"));
+    assert!(!conf.contains("externalBin"));
+}
+
+#[test]
 fn gnome_schema_declares_shortcut() {
     let xml =
         include_str!("../../extensions/gnome/schemas/org.gnome.shell.extensions.clipl.gschema.xml");

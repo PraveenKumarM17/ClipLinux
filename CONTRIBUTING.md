@@ -54,6 +54,7 @@ cargo fmt --all
 | Session probe / adapter | `crates/clipl-platform` |
 | GNOME/KDE UI glue | `extensions/` |
 | Palette UI | `apps/desktop` |
+| Linux packages | `packaging/linux`, `apps/desktop/src-tauri/tauri.conf.json` |
 | CLI diagnostics | `apps/cli` |
 
 ## Tests

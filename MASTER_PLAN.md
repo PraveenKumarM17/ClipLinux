@@ -119,7 +119,7 @@ There is no fake universal Wayland global hotkey.
 
 ## Ownership of later work
 
-Do not start snippets UI, GIFs, stickers, cloud sync, packaging, or new
+Do not start snippets UI, GIFs, stickers, cloud sync, or new
 platform backends from a cleanup pass. The next product work is listed in
 [ROADMAP.md](ROADMAP.md). Guessing Wayland clipboard behavior from X11 code
 remains a defect, not a shortcut.

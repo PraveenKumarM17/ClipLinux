@@ -7,7 +7,7 @@
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
     "beforeDevCommand": "npm run dev",
-    "beforeBuildCommand": "npm run build"
+    "beforeBuildCommand": "bash ./scripts/prepare-bundle.sh"
   },
   "app": {
     "windows": [
@@ -34,12 +34,53 @@
     }
   },
   "bundle": {
-    "active": false,
-    "targets": "deb",
+    "active": true,
+    "targets": ["deb", "rpm", "appimage"],
+    "homepage": "https://github.com/PraveenKumarM17/ClipLinux",
+    "category": "Utility",
+    "license": "MIT OR Apache-2.0",
+    "licenseFile": "../../../LICENSE",
+    "shortDescription": "Clipboard history, emoji, and symbols picker for Linux",
+    "longDescription": "ClipLinux is a keyboard-first clipboard history and emoji/symbols picker.\n\nFull support: GNOME (Wayland, with the Shell extension) and any desktop on X11.\nKDE, Sway, Hyprland, and other Wayland compositors can open the picker from the CLI, but clipboard history watch and restore-focus insert are not implemented there yet.\n\nOn GNOME Wayland, log out and back in after install so Shell loads the ClipLinux extension.",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/icon.png"
-    ]
+    ],
+    "resources": {
+      "../../../extensions/gnome": "gnome-extension"
+    },
+    "linux": {
+      "appimage": {
+        "files": {
+          "/usr/bin/clipl-daemon": "../../../target/release/clipl-daemon",
+          "/usr/bin/clipl": "../../../target/release/clipl"
+        }
+      },
+      "deb": {
+        "section": "utils",
+        "files": {
+          "/usr/bin/clipl-daemon": "../../../target/release/clipl-daemon",
+          "/usr/bin/clipl": "../../../target/release/clipl",
+          "/usr/share/gnome-shell/extensions/clipl@io.clipl": "../../../extensions/gnome",
+          "/etc/xdg/autostart/io.clipl.ClipLinux-daemon.desktop": "../../../packaging/linux/io.clipl.ClipLinux-daemon.desktop",
+          "/etc/xdg/autostart/io.clipl.ClipLinux.desktop": "../../../packaging/linux/io.clipl.ClipLinux-autostart.desktop"
+        },
+        "postInstallScript": "linux/postinst.sh",
+        "preRemoveScript": "linux/prerm.sh"
+      },
+      "rpm": {
+        "release": "1",
+        "files": {
+          "/usr/bin/clipl-daemon": "../../../target/release/clipl-daemon",
+          "/usr/bin/clipl": "../../../target/release/clipl",
+          "/usr/share/gnome-shell/extensions/clipl@io.clipl": "../../../extensions/gnome",
+          "/etc/xdg/autostart/io.clipl.ClipLinux-daemon.desktop": "../../../packaging/linux/io.clipl.ClipLinux-daemon.desktop",
+          "/etc/xdg/autostart/io.clipl.ClipLinux.desktop": "../../../packaging/linux/io.clipl.ClipLinux-autostart.desktop"
+        },
+        "postInstallScript": "linux/postinst.sh",
+        "preRemoveScript": "linux/prerm.sh"
+      }
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 Status of the product relative to the [master plan](MASTER_PLAN.md).
 
-## Latest completed: Activation (Phase 4A)
+## Latest completed: Linux packages + GNOME clipboard bridge
 
 Statically validated. GNOME Shell Super+V was **not** runtime-tested.
 
@@ -21,18 +21,19 @@ Statically validated. GNOME Shell Super+V was **not** runtime-tested.
 - [x] `clipl open` / `toggle` / `hide`
 - [x] Insert into the previous app (copy + hide + Ctrl+V; GNOME extension / X11)
 - [x] GNOME Shell extension clipboard bridge (text push over IPC)
+- [x] Linux packages (Tauri `.deb` / `.rpm` / AppImage + GitHub Release)
 - [ ] KDE / Sway / Hyprland activation backends
 
 ## Next (not started)
 
-Snippets UI, then settings. Not GIFs, stickers, cloud sync, or packaging.
+Snippets UI, then settings. Not GIFs, stickers, or cloud sync.
 
 ## Milestone C — Palette UI (Phase 3A + 3B)
 
 **Shipped:** Tauri v2 picker, history, Unicode 17.0 emoji, curated symbols and
 kaomoji, daemon IPC, keyboard navigation.
 
-**Does not ship:** typing the payload as fake keys, GIF search, sticker store, packaging, snippets UI.
+**Does not ship:** typing the payload as fake keys, GIF search, sticker store, snippets UI.
 
 ## Milestone D — Activation & desktop adapters (Phase 4A complete)
 

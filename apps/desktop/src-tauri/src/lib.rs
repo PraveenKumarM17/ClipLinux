@@ -10,6 +10,7 @@ mod clipboard;
 mod commands;
 mod dto;
 mod ipc;
+mod launch;
 mod picker;
 mod window;
 
@@ -21,7 +22,12 @@ pub use commands::{
     insert_into_app, search_history, set_pinned,
 };
 pub use dto::{ConnectionView, HistoryRow, InsertOutcome};
-pub use ipc::{DaemonClient, START_COMMAND};
+pub use ipc::{disconnected_message, DaemonClient};
+pub use launch::{
+    ensure_daemon_running, gnome_enabled_extensions_with_uuid, gnome_extension_on_disk,
+    install_user_gnome_extension, start_command, try_enable_user_gnome_extension, DAEMON_ON_PATH,
+    GNOME_EXTENSION_UUID,
+};
 pub use picker::{
     copy_picker_item, list_emoji_category, list_picker_category, picker_favorites, search_emoji,
     search_picker, set_picker_favorite, set_skin_tone_pref, skin_tone_pref,
@@ -118,6 +124,13 @@ fn run_tauri() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(window) = app.get_webview_window("palette") {
                 style_palette_window(&window);
             }
+            if !tauri::is_dev() {
+                if let Ok(exe) = std::env::current_exe() {
+                    let _ = crate::launch::ensure_daemon_running(&exe);
+                }
+                install_bundled_gnome_extension(app.handle());
+                crate::launch::try_enable_user_gnome_extension();
+            }
             let handle = app.handle().clone();
             thread::spawn(move || loop {
                 match ActivationSubscriber::connect_path(&paths::socket_path()) {
@@ -194,6 +207,24 @@ fn style_palette_window(window: &tauri::WebviewWindow) {
         gtk_win.set_type_hint(gdk::WindowTypeHint::Dialog);
     }
     let _ = window.hide();
+}
+
+#[cfg(feature = "tauri-app")]
+fn install_bundled_gnome_extension(app: &tauri::AppHandle) {
+    use tauri::Manager;
+    if crate::launch::gnome_extension_on_disk() {
+        return;
+    }
+    let Ok(resource_root) = app.path().resource_dir() else {
+        return;
+    };
+    let bundled = resource_root.join("gnome-extension");
+    if !bundled.join("metadata.json").is_file() {
+        return;
+    }
+    if let Err(err) = crate::launch::install_user_gnome_extension(&bundled) {
+        eprintln!("clipl-desktop: could not install GNOME extension files: {err}");
+    }
 }
 
 #[cfg(feature = "tauri-app")]

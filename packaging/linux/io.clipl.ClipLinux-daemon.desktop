@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=ClipLinux daemon
+Comment=ClipLinux clipboard history daemon
+Exec=clipl-daemon
+TryExec=clipl-daemon
+Icon=clipl-desktop
+Terminal=false
+NoDisplay=true
+StartupNotify=false
+Categories=Utility;
+X-GNOME-Autostart-enabled=true
+X-GNOME-UsesNotifications=false

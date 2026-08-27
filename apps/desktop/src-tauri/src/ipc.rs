@@ -53,8 +53,6 @@ pub fn disconnected_message(err: &clipl_core::Error) -> String {
     }
 }
 
-pub const START_COMMAND: &str = "cargo run -p clipl-daemon";
-
 #[cfg(test)]
 mod tests {
     use super::*;

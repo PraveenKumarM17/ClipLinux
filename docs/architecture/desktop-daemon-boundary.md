@@ -5,7 +5,8 @@ subscribe.
 
 The desktop process is a **client**. `clipl-daemon` is the **source of truth**
 for clipboard history, privacy redaction, pin/delete/clear, picker catalogs,
-and copy loop-prevention.
+and copy loop-prevention. Packaged builds may **start** the daemon if the
+socket is missing; they still never open SQLite in the UI process.
 
 ```
 ┌──────────────────────────┐     Unix socket      ┌─────────────────────┐

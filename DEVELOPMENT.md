@@ -101,6 +101,18 @@ npm run tauri dev
 (`npm run dev`) cannot talk to the daemon; the UI shows a disconnected state
 instead of crashing.
 
+Linux packages (`.deb`, `.rpm`, AppImage):
+
+```bash
+cd apps/desktop
+npm install
+npm run tauri build
+```
+
+That builds `clipl-daemon` and `clipl` into the same packages as the picker.
+Artifacts: `target/release/bundle/` (workspace root). See
+[packaging/linux/README.md](packaging/linux/README.md).
+
 Frontend checks:
 
 ```bash

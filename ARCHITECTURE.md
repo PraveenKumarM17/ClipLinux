@@ -141,6 +141,7 @@ and `history` talk to the daemon over the Unix socket.
 - `extensions/gnome` — Shell extension (activation shortcut → Unix IPC;
   statically validated, not GNOME-runtime-tested)
 - `extensions/kde` — Plasma integration (**planned / not implemented**)
+- `packaging/linux` — `.deb` / `.rpm` / AppImage extras (autostart, postinst)
 - `packages/emoji-data` — Unicode 17.0 compact catalog JSON
 - `packages/sticker-packs` — local packs (**planned / not implemented**)
 - `packages/themes` — design tokens (**planned**; UI CSS is currently hardcoded)

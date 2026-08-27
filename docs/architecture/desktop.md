@@ -29,6 +29,7 @@ needs WebKitGTK on the host.
 - Centered, always on top, **not** in the taskbar / app switcher
 - No system minimize / maximize / hide chrome (undecorated palette)
 - Starts **hidden**; Super+Alt+V (or `clipl toggle`) shows it
+- Packaged builds start `clipl-daemon` if the socket is missing (binary next to the picker, else PATH)
 - Escape, the in-window close button, Alt+F4, and clicking another window **hide** it (the process stays running)
 - Overlay positioning relative to the focused window is still later
 
